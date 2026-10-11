@@ -1,4 +1,3 @@
--- Blox Fruit
 local function geniter(f, s, c)
 	if type(f) ~= "function" then
 		local mt = getmetatable(f)
@@ -2281,8 +2280,8 @@ local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/rel
 local Window = WindUI:CreateWindow({
     Title = "Blox Fruits",
     Author = "by Ovei",
-    Icon = "swords",
-    Folder = "OveiBloxFruits",
+    Icon = "zap",
+    Folder = "VeloxHub",
     Size = UDim2.fromOffset(580, 460),
     MinSize = Vector2.new(360, 300),
     MaxSize = Vector2.new(960, 720),
@@ -2295,7 +2294,7 @@ local Window = WindUI:CreateWindow({
     Acrylic = false,
     OpenButton = {
         Title = "Open Blox Fruits",
-        Icon = "swords",
+        Icon = "zap",
         Enabled = true,
         Draggable = true,
         OnlyMobile = true,
@@ -2306,7 +2305,7 @@ local Window = WindUI:CreateWindow({
 local WindTabs = {
     Overview = Window:Tab({
         Title = "Overview",
-        Desc = "Game status and important island information.",
+        Desc = "Live summary of session time, islands, bosses, and world status.",
         Icon = "house",
     }),
     Farming = Window:Tab({
@@ -2332,7 +2331,7 @@ local WindTabs = {
     ["Player & Stats"] = Window:Tab({
         Title = "Player & Stats",
         Desc = "Player settings, stat upgrades, ESP, and combat tools.",
-        Icon = "bar-chart-3",
+        Icon = "user-cog",
     }),
     ["Travel & Shop"] = Window:Tab({
         Title = "Travel & Shop",
@@ -2435,6 +2434,58 @@ local function getControlDescription(kind, title, options)
         return "Run this action once."
     end
     return nil
+end
+
+local overviewStatus = {
+    ["Time Zone"] = "Loading...",
+    ["Game Time"] = "Loading...",
+    ["Mirage Island"] = "Loading...",
+    ["Kitsune Island"] = "Loading...",
+    ["Prehistoric Island"] = "Loading...",
+    ["Frozen Dimension"] = "Loading...",
+    ["Cake Prince Status"] = "Loading...",
+    ["Rip Indra"] = "Loading...",
+    ["Dough King"] = "Loading...",
+    ["Full Moon"] = "Loading...",
+    ["Legendary Sword"] = "Loading...",
+    ["Bone"] = "Loading...",
+}
+
+local overviewParagraph = WindTabs.Overview:Paragraph({
+    Title = "Live Game Overview",
+    Desc = "Collecting live game information...",
+})
+
+local function overviewValue(key)
+    local value = safeText(overviewStatus[key], "Loading...")
+    value = value:gsub("^Status:%s*", "")
+    if value == "" then
+        return "Loading..."
+    end
+    return value
+end
+
+local function updateOverviewParagraph()
+    local lines = {
+        "TIME & SESSION",
+        "Local time: " .. overviewValue("Time Zone"),
+        "Session: " .. overviewValue("Game Time"),
+        "",
+        "ISLANDS",
+        "Mirage: " .. overviewValue("Mirage Island") .. "  •  Kitsune: " .. overviewValue("Kitsune Island"),
+        "Prehistoric: " .. overviewValue("Prehistoric Island") .. "  •  Frozen Dimension: " .. overviewValue("Frozen Dimension"),
+        "",
+        "BOSS STATUS",
+        "Cake Prince: " .. overviewValue("Cake Prince Status"),
+        "Rip Indra: " .. overviewValue("Rip Indra") .. "  •  Dough King: " .. overviewValue("Dough King"),
+        "",
+        "WORLD INFO",
+        "Moon: " .. overviewValue("Full Moon"),
+        "Legendary Sword: " .. overviewValue("Legendary Sword"),
+        "Bones: " .. overviewValue("Bone"),
+    }
+
+    overviewParagraph:SetDesc(table.concat(lines, "\n"))
 end
 
 local function makeGroupbox(windTab, rawTitle)
@@ -2593,11 +2644,33 @@ local v237 = {}
 function v237:AddTab(oldTitle)
     local route = TabRoutes[oldTitle]
     assert(route and WindTabs[route], "Unknown legacy tab: " .. tostring(oldTitle))
-    local proxy = { _windTab = WindTabs[route] }
+    local proxy = { _windTab = WindTabs[route], _isOverview = route == "Overview" }
+
+    local function makeOverviewGroup(title)
+        local group = {}
+        function group:AddLabel(initialText)
+            overviewStatus[title] = safeText(initialText, "Loading...")
+            updateOverviewParagraph()
+            local label = {}
+            function label:SetText(newText)
+                overviewStatus[title] = safeText(newText, "Loading...")
+                updateOverviewParagraph()
+            end
+            return label
+        end
+        return group
+    end
+
     function proxy:AddLeftGroupbox(title)
+        if self._isOverview then
+            return makeOverviewGroup(title)
+        end
         return makeGroupbox(self._windTab, title)
     end
     function proxy:AddRightGroupbox(title)
+        if self._isOverview then
+            return makeOverviewGroup(title)
+        end
         return makeGroupbox(self._windTab, title)
     end
     return proxy
@@ -31801,8 +31874,8 @@ do
 end
 
 WindUI:Notify({
-	Title = "Blox Fruits",
-	Content = "Blox Fruits by Ovei is ready.",
+	Title = "Blox Fruit",
+	Content = "Blox Fruit Loaded",
 	Icon = "check-circle",
 	Duration = 5
 })
