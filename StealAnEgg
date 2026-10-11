@@ -23302,12 +23302,35 @@ do
 		end
 
 		local t174 = {}
+		local loggedFieldUids = {}
+		local loggedFieldFallbacks = {}
 
 		local function v3757(p881)
 			local AssetCategory = p881 and (p881.AssetCategory or p881.Category)
 
 			if not AssetCategory then
 				return
+			end
+
+			local rawUid = p881.Uid or p881.UID or p881.uid or p881.Id
+			local eventKey
+			if rawUid ~= nil then
+				eventKey = tostring(rawUid)
+				if loggedFieldUids[eventKey] then
+					return
+				end
+				loggedFieldUids[eventKey] = true
+			else
+				local fallback = table.concat({
+					tostring(AssetCategory),
+					tostring(p881.AreaId or p881.Area or ""),
+					tostring(p881.NestId or p881.SlotId or ""),
+					tostring(p881.State or "")
+				}, "|")
+				if loggedFieldFallbacks[fallback] then
+					return
+				end
+				loggedFieldFallbacks[fallback] = true
 			end
 
 			local v3759 = t174[AssetCategory]
@@ -26921,7 +26944,7 @@ do
 
 			Frame2.Size = UDim2.fromScale(1, 1)
 			Frame2.Position = UDim2.fromScale(0, 0)
-			Frame2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			Frame2.BackgroundColor3 = Color3.fromRGB(16, 22, 38)
 			Frame2.BackgroundTransparency = 0
 			Frame2.BorderSizePixel = 0
 			Frame2.ZIndex = 1
@@ -26954,7 +26977,22 @@ do
 			TextLabel5.TextXAlignment = Enum.TextXAlignment.Left
 			TextLabel5.TextColor3 = t166.text
 			TextLabel5.Text = v4242.name
+			TextLabel5.ZIndex = 3
 			TextLabel5.Parent = Frame2
+
+			local Frame3 = Instance.new("TextButton")
+			Frame3.Name = "PanelDragBar"
+			Frame3.Position = UDim2.fromOffset(0, 0)
+			Frame3.Size = UDim2.new(1, -44, 0, 44)
+			Frame3.BackgroundTransparency = 1
+			Frame3.BorderSizePixel = 0
+			Frame3.AutoButtonColor = false
+			Frame3.Text = ""
+			Frame3.TextTransparency = 1
+			Frame3.Selectable = false
+			Frame3.Active = true
+			Frame3.ZIndex = 2
+			Frame3.Parent = Frame2
 
 			local TextButton2 = Instance.new("TextButton")
 
@@ -26992,6 +27030,12 @@ do
 			local u4295 = false
 			local Position
 			local Position2
+			local panelConnections = {}
+
+			local function keepPanelConnection(connection)
+				panelConnections[#panelConnections + 1] = connection
+				return connection
+			end
 
 			local function v4298(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -27003,35 +27047,42 @@ do
 
 			TextLabel5.InputBegan:Connect(v4298)
 			Frame3.InputBegan:Connect(v4298)
-			Frame2.InputBegan:Connect(function(input)
-				if input.Position.Y - Frame.AbsolutePosition.Y <= 44 * (UIScale and UIScale.Scale or 1) then
-					v4298(input)
+			keepPanelConnection(UserInputService.InputChanged:Connect(function(input)
+				if u4295 and Position and Position2 and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+					local delta = input.Position - Position
+					Frame.Position = UDim2.new(Position2.X.Scale, Position2.X.Offset + delta.X, Position2.Y.Scale, Position2.Y.Offset + delta.Y)
 				end
-			end)
-			UserInputService.InputChanged:Connect(function(input)
-				if u4295 and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-					local v4299 = input.Position - Position
-
-					Frame.Position = UDim2.new(Position2.X.Scale, Position2.X.Offset + v4299.X, Position2.Y.Scale, Position2.Y.Offset + v4299.Y)
-				end
-			end)
-			UserInputService.InputEnded:Connect(function(input)
+			end))
+			keepPanelConnection(UserInputService.InputEnded:Connect(function(input)
 				if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and u4295 then
 					u4295 = false
+					Position = nil
+					Position2 = nil
 					pcall(v4260, false)
 				end
-			end)
+			end))
 			v4260(true)
 
 			local CurrentCamera = workspace.CurrentCamera
 
 			if CurrentCamera then
-				CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+				keepPanelConnection(CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
 					if ScreenGui and ScreenGui.Parent and ScreenGui.Enabled then
 						pcall(v4260, false)
 					end
-				end)
+				end))
 			end
+
+			ScreenGui.Destroying:Connect(function()
+				u4295 = false
+				for index = #panelConnections, 1, -1 do
+					local connection = panelConnections[index]
+					if connection then
+						pcall(connection.Disconnect, connection)
+					end
+					panelConnections[index] = nil
+				end
+			end)
 
 			windows[p962] = {
 				gui = ScreenGui,
@@ -27039,9 +27090,46 @@ do
 				holder = Frame,
 				fitScale = v4260
 			}
-			pcall(function()
-				v4242.build(Frame4)
-			end)
+			local buildOk, buildError = pcall(v4242.build, Frame4)
+			if not buildOk then
+				warn("[Steal an Egg] Failed to build " .. tostring(v4242.name) .. ": " .. tostring(buildError))
+				for _, child in ipairs(Frame4:GetChildren()) do
+					child:Destroy()
+				end
+
+				local errorPanel = Instance.new("Frame")
+				errorPanel.Name = "PanelLoadError"
+				errorPanel.Position = UDim2.fromOffset(14, 12)
+				errorPanel.Size = UDim2.new(1, -28, 0, 92)
+				errorPanel.BackgroundColor3 = Color3.fromRGB(28, 31, 48)
+				errorPanel.BorderSizePixel = 0
+				errorPanel.Parent = Frame4
+				Instance.new("UICorner", errorPanel).CornerRadius = UDim.new(0, 8)
+
+				local errorTitle = Instance.new("TextLabel")
+				errorTitle.BackgroundTransparency = 1
+				errorTitle.Position = UDim2.fromOffset(12, 10)
+				errorTitle.Size = UDim2.new(1, -24, 0, 20)
+				errorTitle.Font = Enum.Font.GothamBold
+				errorTitle.TextSize = 13
+				errorTitle.TextColor3 = Color3.fromRGB(255, 210, 120)
+				errorTitle.TextXAlignment = Enum.TextXAlignment.Left
+				errorTitle.Text = "This panel could not load"
+				errorTitle.Parent = errorPanel
+
+				local errorBody = Instance.new("TextLabel")
+				errorBody.BackgroundTransparency = 1
+				errorBody.Position = UDim2.fromOffset(12, 34)
+				errorBody.Size = UDim2.new(1, -24, 0, 42)
+				errorBody.Font = Enum.Font.Gotham
+				errorBody.TextSize = 10
+				errorBody.TextWrapped = true
+				errorBody.TextYAlignment = Enum.TextYAlignment.Top
+				errorBody.TextXAlignment = Enum.TextXAlignment.Left
+				errorBody.TextColor3 = Color3.fromRGB(195, 202, 224)
+				errorBody.Text = "An error was reported in the executor output. Reopen this panel after correcting it."
+				errorBody.Parent = errorPanel
+			end
 			pcall(function()
 				v3771(p962)
 			end)
@@ -29658,7 +29746,7 @@ do
 		do
 			local v4793 = v4742:AddTab({
 				Name = "Main",
-				Icon = "home"
+				Icon = "egg"
 			})
 			local v4794 = v4793:AddSection("Auto Steal")
 
