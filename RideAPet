@@ -331,6 +331,10 @@ if veloxHubState.TweenSpeed == nil or veloxHubState.TweenSpeed == 1250 then
   veloxHubState.TweenSpeed = 50
 end
 
+if veloxHubState.MovementMode == nil then veloxHubState.MovementMode = "Step Tween" end
+if veloxHubState.StepDistance == nil then veloxHubState.StepDistance = 15 end
+if veloxHubState.StepDelay == nil then veloxHubState.StepDelay = 0.03 end
+
 veloxHubState.ReturnSpeed = nil
 
 if veloxHubState.StealApproach == nil then veloxHubState.StealApproach = "Over Map" end
@@ -1716,7 +1720,89 @@ do
     return arrived
   end
 
+  function skyMove.StepFlyTo(target, cancelFn, arriveDist, opts)
+    local hrp = root()
+    if not hrp or typeof(target) ~= "Vector3" then return false end
+    local arrive = arriveDist or 4
+    if (hrp.Position - target).Magnitude <= arrive then return true end
+
+    local stepDist = math.clamp(tonumber(veloxHubState.StepDistance) or 15, 1, 100)
+    local stepDelay = math.clamp(tonumber(veloxHubState.StepDelay) or 0.03, 0, 0.5)
+
+    local waypoints = route(hrp.Position, target, opts or skyMove.RouteOpts())
+    local token = { Cancelled = false }
+    function token:Cancel() self.Cancelled = true end
+    v35.CurrentTween = token
+
+    setNoclip(true)
+    local noclipConn = noclipConnection()
+    local arrived = false
+    local lastProgress = os.clock()
+    local bestMag = math.huge
+
+    for _, waypoint in ipairs(waypoints) do
+      if token.Cancelled or (cancelFn and cancelFn()) then break end
+
+      while true do
+        if token.Cancelled or (cancelFn and cancelFn()) then break end
+        hrp = root()
+        if not hrp then break end
+
+        local delta = waypoint - hrp.Position
+        local mag = delta.Magnitude
+
+        if mag <= stepDist then
+          pcall(function()
+            hrp.CFrame = CFrame.new(waypoint) * hrp.CFrame.Rotation
+            hrp.AssemblyLinearVelocity = Vector3.zero
+            hrp.AssemblyAngularVelocity = Vector3.zero
+          end)
+          break
+        end
+
+        if mag < bestMag - 0.5 then
+          bestMag = mag
+          lastProgress = os.clock()
+        end
+        if os.clock() - lastProgress > 6 then break end
+
+        local nextPosition = hrp.Position + delta.Unit * stepDist
+        local flat = Vector3.new(delta.X, 0, delta.Z)
+        local rotation = flat.Magnitude > 0.1 and CFrame.lookAt(Vector3.zero, flat.Unit) or hrp.CFrame.Rotation
+
+        pcall(function()
+          hrp.CFrame = CFrame.new(nextPosition) * rotation
+          hrp.AssemblyLinearVelocity = Vector3.zero
+          hrp.AssemblyAngularVelocity = Vector3.zero
+        end)
+
+        if stepDelay > 0 then
+          task.wait(stepDelay)
+        else
+          runService.Heartbeat:Wait()
+        end
+      end
+      if token.Cancelled or (cancelFn and cancelFn()) then break end
+    end
+
+    hrp = root()
+    if hrp and (hrp.Position - target).Magnitude <= arrive + 3 then
+      arrived = true
+    end
+
+    noclipConn:Disconnect()
+    setNoclip(false)
+    if v35.CurrentTween == token then v35.CurrentTween = nil end
+    hrp = root()
+    if hrp then pcall(function() hrp.AssemblyLinearVelocity = Vector3.zero end) end
+    return arrived
+  end
+
   function skyMove.MoveTo(target, cancelFn, arriveDist, opts)
+    local mode = veloxHubState.MovementMode or "Step Tween"
+    if mode == "Step Tween" then
+      return skyMove.StepFlyTo(target, cancelFn, arriveDist, opts)
+    end
     return skyMove.FlyTo(target, cancelFn, arriveDist, opts)
   end
 
@@ -3411,11 +3497,38 @@ MainTab:Dropdown({
 
 MainTab:Slider({
   Title = "Tween Speed",
-  Desc = "Smooth flight speed in studs/sec (higher = faster but easier to detect)",
+  Desc = "Smooth flight speed in studs/sec (only used in Smooth Continuous mode)",
   Step = 5,
   Value = { Min = 20, Max = 500, Default = 50 },
   Flag = "TweenSpeed",
   Callback = function(v) veloxHubState.TweenSpeed = v end,
+})
+
+MainTab:Dropdown({
+  Title = "Movement Mode",
+  Desc = "Smooth = continuous slide | Step Tween = many tiny hops (stealthier)",
+  Values = { "Step Tween", "Smooth Continuous" },
+  Value = "Step Tween",
+  Flag = "MovementMode",
+  Callback = function(v) veloxHubState.MovementMode = v end,
+})
+
+MainTab:Slider({
+  Title = "Step Distance",
+  Desc = "How many studs per hop in Step Tween mode (lower = stealthier)",
+  Step = 1,
+  Value = { Min = 2, Max = 60, Default = 15 },
+  Flag = "StepDistance",
+  Callback = function(v) veloxHubState.StepDistance = v end,
+})
+
+MainTab:Slider({
+  Title = "Step Delay",
+  Desc = "Delay between hops in seconds (higher = slower but smoother)",
+  Step = 0.01,
+  Value = { Min = 0, Max = 0.3, Default = 0.03 },
+  Flag = "StepDelay",
+  Callback = function(v) veloxHubState.StepDelay = v end,
 })
 
 MainTab:Slider({
