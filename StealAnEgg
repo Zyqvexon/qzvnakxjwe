@@ -890,7 +890,8 @@ local senaV4Config = {
 	BackpackRateEsp = false,
 	AntiAFK = true,
 	AutoReconnect = true,
-	AutoExecute = false,
+	AutoExecute = genv.SNE_AutoExecute == true,
+	AutoExecuteURL = tostring(genv.__VeloxHubAutoExecuteUrl or ""),
 	AutoPlace = false,
 	PlaceRarities = { "None" },
 	AutoHatch = false,
@@ -922,8 +923,7 @@ local senaV4Config = {
 	StealPlayers = false,
 	StealPlayerRarities = { "None" },
 	StealPlayerMinValue = 0,
-	StealPlayerTarget = "Any Player"
-}
+	StealPlayerTarget = "Any Player",}
 local EggState = require(game:GetService("ReplicatedStorage").Client.EggState)
 
 EggState.GetAreaEggSnapshot = EggState.ReadFieldEggs
@@ -9784,7 +9784,7 @@ do
 
 						if lastCarryReject ~= p412._lastCarryRejectLogged then
 							p412._lastCarryRejectLogged = lastCarryReject
-							warn("[Sena Steal] carry refused: " .. lastCarryReject)
+							warn("[Velox Hub] carry refused: " .. lastCarryReject)
 						end
 					end
 
@@ -10703,7 +10703,7 @@ do
 			end
 
 			if not ok then
-				warn("[Sena Steal] admin steal error: " .. tostring(result))
+				warn("[Velox Hub] admin steal error: " .. tostring(result))
 
 				if not p444.destroyed and p444.enabled then
 					p444:_finish("Steal error — retrying")
@@ -11056,7 +11056,6 @@ do
 					end
 
 					p453.stats.delivered = (p453.stats.delivered or 0) + 1
-
 				end)
 			end
 		end
@@ -14550,10 +14549,11 @@ do
 		v613:setAutoUpgrade(true)
 	end
 
-	local function v2064()
+	local function createEggValueInfo()
 		local ReplicatedStorage2 = game:GetService("ReplicatedStorage")
 		local AssetEarnings
 		local EggRecords
+		local SimpleFormat
 
 		pcall(function()
 			AssetEarnings = require(ReplicatedStorage2.Shared.Util.AssetEarnings)
@@ -14561,151 +14561,70 @@ do
 		pcall(function()
 			EggRecords = require(ReplicatedStorage2.Shared.Util.EggRecords)
 		end)
+		pcall(function()
+			SimpleFormat = require(ReplicatedStorage2.Packages.FormatNumber.Simple)
+		end)
 
-		local function compact(p602)
-			local Simple
-
-			pcall(function()
-				Simple = require(ReplicatedStorage2.Packages.FormatNumber.Simple)
-			end)
-
-			if Simple and Simple.FormatCompact then
-				local ok, result = pcall(Simple.FormatCompact, p602, ".#")
-
+		local function compact(value)
+			value = tonumber(value) or 0
+			if SimpleFormat and type(SimpleFormat.FormatCompact) == "function" then
+				local ok, result = pcall(SimpleFormat.FormatCompact, value, ".#")
 				if ok and result then
 					return tostring(result)
 				end
 			end
-
-			local format = string.format
-			local s3 = "%.1f"
-			local v2101 = p602 or 0
-
-			return format(s3, v2101)
+			return string.format("%.1f", value)
 		end
 
-		local t69 = {
+		local info = {
 			compact = compact,
-			rateOf = function(p603)
-				if not AssetEarnings or type(p603) ~= "table" then
+			rateOf = function(record)
+				if not AssetEarnings or type(record) ~= "table" then
 					return 0
 				end
-
-				local v2102 = tonumber(p603.AssetScale) or 1
-				local t72 = {
-					Category = p603.AssetCategory,
-					Scale = v2102,
-					AssetScale = v2102,
-					BaseMutation = p603.BaseMutation,
-					Mutations = p603.Mutations or {}
+				local scale = tonumber(record.AssetScale) or 1
+				local data = {
+					Category = record.AssetCategory,
+					Scale = scale,
+					AssetScale = scale,
+					BaseMutation = record.BaseMutation,
+					Mutations = record.Mutations or {}
 				}
-
-				for _, v in ipairs({
-					"LiveRatePerSecond",
-					"RatePerSecond",
-					"CatalogRatePerSecond"
-				}) do
-					if type(AssetEarnings[v]) == "function" then
-						local ok, result = pcall(AssetEarnings[v], t72)
-
+				for _, methodName in ipairs({"LiveRatePerSecond", "RatePerSecond", "CatalogRatePerSecond"}) do
+					local method = AssetEarnings[methodName]
+					if type(method) == "function" then
+						local ok, result = pcall(method, data)
 						if ok and type(result) == "number" and result > 0 then
 							return result
 						end
 					end
 				end
-
 				return 0
 			end,
-			weightOf = function(p604)
-				if not EggRecords or type(p604) ~= "table" then
+			weightOf = function(record)
+				if not EggRecords or type(record) ~= "table" then
 					return 0
 				end
-
-				local ok, result = pcall(EggRecords.WeightKgForScale, p604.AssetCategory, tonumber(p604.AssetScale) or 1)
-
-				if ok and type(result) == "number" then
-					return result
-				end
-
-				return 0
+				local ok, result = pcall(EggRecords.WeightKgForScale, record.AssetCategory, tonumber(record.AssetScale) or 1)
+				return ok and type(result) == "number" and result or 0
 			end,
-			sizeText = function(p605)
-				local v2110 = tonumber(p605 and (p605.AssetScale or p605.Scale)) or 1
-
-				if v2110 >= 100 then
-					return string.format("%.0fx", v2110)
-				end
-
-				return string.format("%.2fx", v2110)
+			sizeText = function(record)
+				local scale = tonumber(record and (record.AssetScale or record.Scale)) or 1
+				return scale >= 100 and string.format("%.0fx", scale) or string.format("%.2fx", scale)
 			end,
-			weightText = function(p606)
-				local v2111 = tonumber(p606) or 0
-
-				if v2111 >= 1000 then
-					return compact(v2111) .. " kg"
-				end
-
-				return string.format("%.1fkg", v2111)
+			weightText = function(value)
+				value = tonumber(value) or 0
+				return value >= 1000 and (compact(value) .. " kg") or string.format("%.1fkg", value)
 			end,
-			rateText = function(p607)
-				local v2112 = tonumber(p607) or 0
-
-				if v2112 >= 1000 then
-					return "$" .. compact(v2112) .. "/s"
-				end
-
-				return string.format("$%d/s", math.floor(v2112))
-			end,
-		}
-		local t74 = {
-			"Image",
-			"Icon",
-			"Thumbnail",
-			"ImageId",
-			"IconId",
-			"Texture",
-			"Asset",
-			"DisplayImage"
-		}
-
-		t69.eggAsset = function(p611)
-			local Directory
-
-			pcall(function()
-				Directory = require(ReplicatedStorage2.Data.Assets).Directory
-			end)
-
-			local v2122 = Directory and Directory[p611]
-
-			if type(v2122) ~= "table" then
-				return nil
+			rateText = function(value)
+				value = tonumber(value) or 0
+				return value >= 1000 and ("$" .. compact(value) .. "/s") or string.format("$%d/s", math.floor(value))
 			end
-
-			for _, v in ipairs({
-				v2122,
-				v2122.Egg,
-				v2122.Pet
-			}) do
-				if type(v) == "table" then
-					for _, v2 in ipairs(t74) do
-						local v2127 = v[v2]
-						local match = (type(v2127) == "string" or type(v2127) == "number") and tostring(v2127):match("%d+")
-
-						if not match or not (tonumber(match) > 0) then
-							continue
-						end
-
-						return match
-					end
-				end
-			end
-
-			return nil
-		end
-		return t69
+		}
+		return info
 	end
 
-	genv.__SenaV4EggData = v2064()
+	genv.__SenaV4EggValueInfo = createEggValueInfo()
 
 	local function v2149()
 		local Players2 = game:GetService("Players")
@@ -14824,7 +14743,7 @@ do
 			local v2171 = tonumber(senaV4Config.StealPlayerMinValue) or 0
 
 			if v2171 > 0 then
-				if (genv.__SenaV4EggData and genv.__SenaV4EggData.rateOf(p630) or 0) < v2171 then
+				if (genv.__SenaV4EggValueInfo and genv.__SenaV4EggValueInfo.rateOf(p630) or 0) < v2171 then
 					return false
 				end
 			end
@@ -17379,53 +17298,64 @@ local t103 = {
 }
 
 local function v2528()
-	pcall(function()
-		if writefile then
-			pcall(function()
-				writefile("autoexec/Sena_StealAnEgg.lua", [[repeat task.wait(0.5) until game:IsLoaded()
+	local sourceUrl = tostring(genv.__VeloxHubAutoExecuteUrl or senaV4Config.AutoExecuteURL or "")
+	if not sourceUrl:match("^https://") then
+		warn("[Velox Hub] Auto Execute needs the raw HTTPS URL of the hosted migrated Velox Hub script. Set it in Player settings first.")
+		return false
+	end
+
+	local bootstrap = string.format([[repeat task.wait(0.5) until game:IsLoaded()
 task.wait(1.5)
 if getgenv then getgenv().SNE_AutoExecute = true end
-loadstring(game:HttpGet("https://senahub.xyz/raw/saev2"))()
-]])
-			end)
-			pcall(function()
-				writefile("autoexecute/Sena_StealAnEgg.lua", [[repeat task.wait(0.5) until game:IsLoaded()
-task.wait(1.5)
-if getgenv then getgenv().SNE_AutoExecute = true end
-loadstring(game:HttpGet("https://senahub.xyz/raw/saev2"))()
-]])
-			end)
-		end
-	end)
+loadstring(game:HttpGet(%q))()
+]], sourceUrl)
 
-	local queue_on_teleport_ = queue_on_teleport or syn and syn.queue_on_teleport or fluxus and fluxus.queue_on_teleport
-
-	if queue_on_teleport_ then
+	if type(writefile) == "function" then
 		pcall(function()
-			queue_on_teleport_([[repeat task.wait(0.5) until game:IsLoaded()
-task.wait(1.5)
-if getgenv then getgenv().SNE_AutoExecute = true end
-loadstring(game:HttpGet("https://senahub.xyz/raw/saev2"))()
-]])
+			writefile("autoexec/VeloxHub_StealAnEgg.lua", bootstrap)
+		end)
+		pcall(function()
+			writefile("autoexecute/VeloxHub_StealAnEgg.lua", bootstrap)
 		end)
 	end
+
+	local queue_on_teleport_ = queue_on_teleport or syn and syn.queue_on_teleport or fluxus and fluxus.queue_on_teleport
+	if type(queue_on_teleport_) == "function" then
+		local ok, err = pcall(queue_on_teleport_, bootstrap)
+		if not ok then
+			warn("[Velox Hub] Could not queue Auto Execute: " .. tostring(err))
+			return false
+		end
+		return true
+	end
+
+	if type(writefile) == "function" then
+		return true
+	end
+
+	warn("[Velox Hub] This executor does not expose a supported Auto Execute method.")
+	return false
 end
 local function v2530()
 	pcall(function()
 		if delfile then
-			pcall(function()
-				delfile("autoexec/Sena_StealAnEgg.lua")
-			end)
-			pcall(function()
-				delfile("autoexecute/Sena_StealAnEgg.lua")
-			end)
+			for _, path in ipairs({
+				"autoexec/VeloxHub_StealAnEgg.lua",
+				"autoexecute/VeloxHub_StealAnEgg.lua",
+				"autoexec/Sena_StealAnEgg.lua",
+				"autoexecute/Sena_StealAnEgg.lua"
+			}) do
+				pcall(delfile, path)
+			end
 		elseif writefile then
-			pcall(function()
-				writefile("autoexec/Sena_StealAnEgg.lua", "")
-			end)
-			pcall(function()
-				writefile("autoexecute/Sena_StealAnEgg.lua", "")
-			end)
+			for _, path in ipairs({
+				"autoexec/VeloxHub_StealAnEgg.lua",
+				"autoexecute/VeloxHub_StealAnEgg.lua",
+				"autoexec/Sena_StealAnEgg.lua",
+				"autoexecute/Sena_StealAnEgg.lua"
+			}) do
+				pcall(writefile, path, "")
+			end
 		end
 	end)
 end
@@ -17440,7 +17370,12 @@ local function v2532()
 	u2531 = true
 
 	if v2526.autoExecute or getgenv and getgenv().SNE_AutoExecute then
-		pcall(v2528)
+		local ok, enabled = pcall(v2528)
+		if not ok or enabled ~= true then
+			v2526.autoExecute = false
+			senaV4Config.AutoExecute = false
+			if getgenv then getgenv().SNE_AutoExecute = false end
+		end
 	end
 
 	task.wait(3)
@@ -21943,32 +21878,32 @@ do
 						ScrollingFrame = LocalPlayer.PlayerGui.BackpackGui.Backpack.Main.Inventory.ScrollingFrame
 					end)
 
-					local __SenaV4EggData = genv.__SenaV4EggData
-					local SenaDiscord = ScrollingFrame and ScrollingFrame.Parent:FindFirstChild("SenaDiscord")
+					local EggValueInfo = genv.__SenaV4EggValueInfo
+					local RateHeader = ScrollingFrame and ScrollingFrame.Parent:FindFirstChild("VeloxRateHeader")
 
-					if ScrollingFrame and senaV4Config.BackpackRateEsp and not SenaDiscord then
+					if ScrollingFrame and senaV4Config.BackpackRateEsp and not RateHeader then
 						local TextLabel = Instance.new("TextLabel")
 
-						TextLabel.Name = "SenaDiscord"
+						TextLabel.Name = "VeloxRateHeader"
 						TextLabel.BackgroundTransparency = 1
 						TextLabel.Position = UDim2.new(0.34, 0, 0.017, 0)
 						TextLabel.Size = UDim2.new(0.3, 0, 0.09, 0)
 						TextLabel.Font = Enum.Font.GothamBlack
-						TextLabel.Text = "discord.gg/senahub"
+						TextLabel.Text = "Velox Hub · Egg Value/s"
 						TextLabel.TextScaled = true
 						TextLabel.TextXAlignment = Enum.TextXAlignment.Left
 						TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 						TextLabel.TextStrokeTransparency = 0
 						TextLabel.ZIndex = 40
 						TextLabel.Parent = ScrollingFrame.Parent
-					elseif SenaDiscord and not senaV4Config.BackpackRateEsp then
-						SenaDiscord:Destroy()
+					elseif RateHeader and not senaV4Config.BackpackRateEsp then
+						RateHeader:Destroy()
 					end
 
 					if ScrollingFrame then
 						local t149 = {}
 
-						if senaV4Config.BackpackRateEsp and EggRecords and Save and __SenaV4EggData then
+						if senaV4Config.BackpackRateEsp and EggRecords and Save and EggValueInfo then
 							local v3454 = (Save.Peek or Save.Get)()
 							local pairs_ = pairs
 							local EggInventory = v3454 and v3454.EggInventory or {}
@@ -22023,7 +21958,7 @@ do
 										SenaRate.Parent = child
 									end
 
-									SenaRate.Text = __SenaV4EggData.compact(__SenaV4EggData.rateOf(v3467)) .. "/s"
+									SenaRate.Text = EggValueInfo.compact(EggValueInfo.rateOf(v3467)) .. "/s"
 								elseif SenaRate then
 									SenaRate:Destroy()
 								end
@@ -23459,6 +23394,8 @@ do
 		local TextLabel
 		local s12 = "rarity"
 		local t177 = {}
+		local logRows = {}
+		local logEmptyState
 
 		local function v3776()
 			v3698()
@@ -23480,262 +23417,273 @@ do
 
 		v3766 = function()
 			v3698()
+			if not u3772 then return end
 
-			if not u3772 then
-				return
-			end
-
-			for _, child in ipairs(u3772:GetChildren()) do
-				if child:IsA("Frame") then
-					child:Destroy()
-				end
-			end
-
-			local t178 = {}
-			local n69 = 0
-
-			for _, v in pairs(t174) do
-				table.insert(t178, v)
-				n69 += v.count
+			local entries = {}
+			local totalSightings = 0
+			for _, entry in pairs(t174) do
+				entries[#entries + 1] = entry
+				totalSightings += tonumber(entry.count) or 0
 			end
 
 			if s12 == "count" then
-				table.sort(t178, function(p884, p885)
-					if p884.count == p885.count then
-						return (p884.rnum or 0) > (p885.rnum or 0)
-					end
-
-					return p884.count > p885.count
+				table.sort(entries, function(a, b)
+					if a.count == b.count then return (a.rnum or 0) > (b.rnum or 0) end
+					return (a.count or 0) > (b.count or 0)
 				end)
 			elseif s12 == "name" then
-				table.sort(t178, function(p886, p887)
-					return tostring(p886.name) < tostring(p887.name)
-				end)
+				table.sort(entries, function(a, b) return tostring(a.name) < tostring(b.name) end)
 			else
-				table.sort(t178, function(p888, p889)
-					if p888.rnum == p889.rnum then
-						return p888.count > p889.count
-					end
-
-					return (p888.rnum or 0) > (p889.rnum or 0)
+				table.sort(entries, function(a, b)
+					if a.rnum == b.rnum then return (a.count or 0) > (b.count or 0) end
+					return (a.rnum or 0) > (b.rnum or 0)
 				end)
 			end
 
-			for i, v in ipairs(t178) do
-				local Frame = Instance.new("Frame")
+			local active = {}
+			for index, entry in ipairs(entries) do
+				local key = tostring(entry.name or "Unknown")
+				active[key] = true
+				local row = logRows[key]
+				local accent = entry.color or v3697.accent
+				if not row or not row.frame or not row.frame.Parent then
+					local frame = Instance.new("Frame")
+					frame.Name = "EggLog_" .. tostring(index)
+					frame.Size = UDim2.new(1, -4, 0, 48)
+					frame.BackgroundColor3 = Color3.fromRGB(20, 27, 45)
+					frame.BackgroundTransparency = 0.08
+					frame.BorderSizePixel = 0
+					frame.Parent = u3772
+					Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
 
-				Frame.Size = UDim2.new(1, -6, 0, 34)
-				Frame.BackgroundColor3 = v3697.surface
-				Frame.BackgroundTransparency = 0.12
-				Frame.BorderSizePixel = 0
-				Frame.LayoutOrder = i
-				Frame.Parent = u3772
-				Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 4)
+					local stroke = Instance.new("UIStroke")
+					stroke.Color = Color3.fromRGB(55, 68, 101)
+					stroke.Thickness = 1
+					stroke.Transparency = 0.55
+					stroke.Parent = frame
 
-				local UIStroke = Instance.new("UIStroke", Frame)
+					local accentBar = Instance.new("Frame")
+					accentBar.Position = UDim2.fromOffset(0, 7)
+					accentBar.Size = UDim2.new(0, 3, 1, -14)
+					accentBar.BackgroundColor3 = accent
+					accentBar.BorderSizePixel = 0
+					accentBar.Parent = frame
+					Instance.new("UICorner", accentBar).CornerRadius = UDim.new(1, 0)
 
-				UIStroke.Color = v3697.strokeCol
-				UIStroke.Thickness = 1
-				UIStroke.Transparency = 0.72
+					local icon = Instance.new("ImageLabel")
+					icon.BackgroundTransparency = 1
+					icon.Position = UDim2.fromOffset(10, 9)
+					icon.Size = UDim2.fromOffset(28, 28)
+					icon.ScaleType = Enum.ScaleType.Fit
+					icon.Image = entry.image or ""
+					icon.Parent = frame
 
-				local Frame2 = Instance.new("Frame")
+					local nameLabel = Instance.new("TextLabel")
+					nameLabel.BackgroundTransparency = 1
+					nameLabel.Position = UDim2.fromOffset(46, 6)
+					nameLabel.Size = UDim2.new(1, -154, 0, 18)
+					nameLabel.Font = Enum.Font.GothamBold
+					nameLabel.TextSize = 12
+					nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+					nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+					nameLabel.TextColor3 = Color3.fromRGB(241, 245, 255)
+					nameLabel.Parent = frame
 
-				Frame2.Size = UDim2.new(0, 3, 1, -10)
-				Frame2.Position = UDim2.fromOffset(0, 5)
-				Frame2.BorderSizePixel = 0
-				Frame2.BackgroundColor3 = v.color or v3697.accent
-				Frame2.Parent = Frame
-				Instance.new("UICorner", Frame2).CornerRadius = UDim.new(1, 0)
+					local detailLabel = Instance.new("TextLabel")
+					detailLabel.BackgroundTransparency = 1
+					detailLabel.Position = UDim2.fromOffset(46, 25)
+					detailLabel.Size = UDim2.new(1, -154, 0, 15)
+					detailLabel.Font = Enum.Font.GothamMedium
+					detailLabel.TextSize = 10
+					detailLabel.TextXAlignment = Enum.TextXAlignment.Left
+					detailLabel.TextTruncate = Enum.TextTruncate.AtEnd
+					detailLabel.TextColor3 = Color3.fromRGB(164, 177, 207)
+					detailLabel.Parent = frame
 
-				local ImageLabel = Instance.new("ImageLabel")
+					local countLabel = Instance.new("TextLabel")
+					countLabel.AnchorPoint = Vector2.new(1, 0.5)
+					countLabel.Position = UDim2.new(1, -10, 0.5, -3)
+					countLabel.Size = UDim2.fromOffset(88, 20)
+					countLabel.BackgroundColor3 = Color3.fromRGB(49, 61, 102)
+					countLabel.BackgroundTransparency = 0.15
+					countLabel.Font = Enum.Font.GothamBold
+					countLabel.TextSize = 12
+					countLabel.TextColor3 = Color3.fromRGB(221, 228, 255)
+					countLabel.Parent = frame
+					Instance.new("UICorner", countLabel).CornerRadius = UDim.new(0, 5)
 
-				ImageLabel.Position = UDim2.fromOffset(10, 5)
-				ImageLabel.Size = UDim2.fromOffset(24, 24)
-				ImageLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				ImageLabel.BackgroundTransparency = v.image and 0.9 or 0.94
-				ImageLabel.BorderSizePixel = 0
-				ImageLabel.ScaleType = Enum.ScaleType.Fit
-				ImageLabel.Image = v.image or ""
-				ImageLabel.Parent = Frame
-				Instance.new("UICorner", ImageLabel).CornerRadius = UDim.new(0, 4)
-
-				if not v.image then
-					local Frame3 = Instance.new("Frame")
-
-					Frame3.AnchorPoint = Vector2.new(0.5, 0.5)
-					Frame3.Position = UDim2.fromScale(0.5, 0.5)
-					Frame3.Size = UDim2.fromOffset(9, 9)
-					Frame3.BackgroundColor3 = v.color or v3697.accent
-					Frame3.BorderSizePixel = 0
-					Frame3.Parent = ImageLabel
-					Instance.new("UICorner", Frame3).CornerRadius = UDim.new(1, 0)
+					row = {frame = frame, accent = accentBar, icon = icon, name = nameLabel, detail = detailLabel, count = countLabel, stroke = stroke}
+					logRows[key] = row
 				end
 
-				local TextLabel2 = Instance.new("TextLabel")
-
-				TextLabel2.BackgroundTransparency = 1
-				TextLabel2.Position = UDim2.fromOffset(42, 0)
-				TextLabel2.Size = UDim2.new(0.5, -42, 1, 0)
-				TextLabel2.Font = Enum.Font.GothamBold
-				TextLabel2.TextSize = 13
-				TextLabel2.TextXAlignment = Enum.TextXAlignment.Left
-				TextLabel2.TextTruncate = Enum.TextTruncate.AtEnd
-				TextLabel2.TextColor3 = v3697.text
-				TextLabel2.Text = tostring(v.name)
-				TextLabel2.Parent = Frame
-
-				local TextLabel3 = Instance.new("TextLabel")
-
-				TextLabel3.BackgroundTransparency = 1
-				TextLabel3.Position = UDim2.new(0.5, 0, 0, 0)
-				TextLabel3.Size = UDim2.new(0.3, 0, 1, 0)
-				TextLabel3.Font = Enum.Font.GothamBold
-				TextLabel3.TextSize = 12
-				TextLabel3.TextXAlignment = Enum.TextXAlignment.Left
-				TextLabel3.TextColor3 = v.color or v3697.muted
-				TextLabel3.Text = tostring(v.rarity)
-				TextLabel3.Parent = Frame
-
-				local TextLabel4 = Instance.new("TextLabel")
-
-				TextLabel4.BackgroundTransparency = 1
-				TextLabel4.Position = UDim2.new(0.8, 0, 0, 0)
-				TextLabel4.Size = UDim2.new(0.2, -12, 1, 0)
-				TextLabel4.Font = Enum.Font.GothamBold
-				TextLabel4.TextSize = 13
-				TextLabel4.TextXAlignment = Enum.TextXAlignment.Right
-				TextLabel4.TextColor3 = v3697.accent
-				TextLabel4.Text = "x" .. tostring(v.count)
-				TextLabel4.Parent = Frame
+				row.frame.LayoutOrder = index
+				row.accent.BackgroundColor3 = accent
+				row.icon.Image = entry.image or ""
+				row.name.Text = tostring(entry.name or "Unknown")
+				row.detail.TextColor3 = accent
+				local age = math.max(0, math.floor(os.clock() - (tonumber(entry.last) or os.clock())))
+				row.detail.Text = string.format("%s  •  Last detected %ds ago", tostring(entry.rarity or "Unknown"), age)
+				row.count.Text = string.format("%s sightings", tostring(entry.count or 0))
 			end
 
-			u3772.CanvasSize = UDim2.new(0, 0, 0, #t178 * 38 + 6)
-
-			if TextLabel then
-				TextLabel.Text = "Total: " .. tostring(n69)
+			for key, row in pairs(logRows) do
+				if not active[key] then
+					if row.frame then row.frame:Destroy() end
+					logRows[key] = nil
+				end
 			end
+
+			u3772.CanvasSize = UDim2.new(0, 0, 0, #entries * 54 + 4)
+			if TextLabel then TextLabel.Text = string.format("%d sightings", totalSightings) end
+			if logEmptyState then logEmptyState.Visible = #entries == 0 end
 		end
 
 		local function v3797(p890)
+			p890.BackgroundTransparency = 1
+
+			local title = Instance.new("TextLabel")
+			title.BackgroundTransparency = 1
+			title.Position = UDim2.fromOffset(14, 2)
+			title.Size = UDim2.new(1, -150, 0, 22)
+			title.Font = Enum.Font.GothamBold
+			title.TextSize = 16
+			title.TextXAlignment = Enum.TextXAlignment.Left
+			title.TextColor3 = Color3.fromRGB(241, 245, 255)
+			title.Text = "Egg Logs"
+			title.Parent = p890
+
+			local subtitle = Instance.new("TextLabel")
+			subtitle.BackgroundTransparency = 1
+			subtitle.Position = UDim2.fromOffset(14, 24)
+			subtitle.Size = UDim2.new(1, -28, 0, 16)
+			subtitle.Font = Enum.Font.GothamMedium
+			subtitle.TextSize = 10
+			subtitle.TextXAlignment = Enum.TextXAlignment.Left
+			subtitle.TextColor3 = Color3.fromRGB(151, 166, 198)
+			subtitle.Text = "Live field sightings · session summary"
+			subtitle.Parent = p890
+
 			TextLabel = Instance.new("TextLabel")
-			TextLabel.BackgroundTransparency = 1
-			TextLabel.Position = UDim2.new(1, -150, 0, 4)
-			TextLabel.Size = UDim2.fromOffset(110, 22)
+			TextLabel.BackgroundColor3 = Color3.fromRGB(38, 48, 79)
+			TextLabel.BackgroundTransparency = 0.08
+			TextLabel.Position = UDim2.new(1, -126, 0, 5)
+			TextLabel.Size = UDim2.fromOffset(112, 24)
 			TextLabel.Font = Enum.Font.GothamBold
-			TextLabel.TextSize = 12
-			TextLabel.TextXAlignment = Enum.TextXAlignment.Right
-			TextLabel.TextColor3 = v3697.muted
-			TextLabel.Text = "Total: 0"
+			TextLabel.TextSize = 10
+			TextLabel.TextXAlignment = Enum.TextXAlignment.Center
+			TextLabel.TextColor3 = Color3.fromRGB(212, 222, 255)
+			TextLabel.Text = "0 sightings"
 			TextLabel.Parent = p890
+			Instance.new("UICorner", TextLabel).CornerRadius = UDim.new(0, 6)
 
-			local Frame = Instance.new("Frame")
+			local toolbar = Instance.new("Frame")
+			toolbar.Position = UDim2.fromOffset(14, 47)
+			toolbar.Size = UDim2.new(1, -28, 0, 28)
+			toolbar.BackgroundTransparency = 1
+			toolbar.Parent = p890
+			local toolbarLayout = Instance.new("UIListLayout")
+			toolbarLayout.FillDirection = Enum.FillDirection.Horizontal
+			toolbarLayout.SortOrder = Enum.SortOrder.LayoutOrder
+			toolbarLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+			toolbarLayout.Padding = UDim.new(0, 6)
+			toolbarLayout.Parent = toolbar
 
-			Frame.Position = UDim2.fromOffset(14, 4)
-			Frame.Size = UDim2.new(1, -28, 0, 28)
-			Frame.BackgroundTransparency = 1
-			Frame.Parent = p890
-
-			local UIListLayout = Instance.new("UIListLayout", Frame)
-
-			UIListLayout.FillDirection = Enum.FillDirection.Horizontal
-			UIListLayout.Padding = UDim.new(0, 6)
-			UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-
-			local function v3800(p891, p892, p893)
-				local TextButton = Instance.new("TextButton")
-
-				TextButton.Size = UDim2.fromOffset(p893, 26)
-				TextButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				TextButton.BackgroundTransparency = 0.88
-				TextButton.AutoButtonColor = false
-				TextButton.Font = Enum.Font.GothamBold
-				TextButton.TextSize = 12
-				TextButton.TextColor3 = v3697.btnText
-				TextButton.Text = p891
-				TextButton.Parent = Frame
-				Instance.new("UICorner", TextButton).CornerRadius = UDim.new(0, 4)
-
-				local UIStroke = Instance.new("UIStroke", TextButton)
-
-				UIStroke.Color = v3697.accent
-				UIStroke.Thickness = 1
-				UIStroke.Transparency = 1
-				TextButton.MouseButton1Click:Connect(function()
-					s12 = p892
+			local function makeSortButton(label, sortKey, width)
+				local button = Instance.new("TextButton")
+				button.Name = "Sort_" .. sortKey
+				button.Size = UDim2.fromOffset(width, 26)
+				button.BackgroundColor3 = Color3.fromRGB(38, 48, 79)
+				button.BackgroundTransparency = 0.15
+				button.AutoButtonColor = true
+				button.Font = Enum.Font.GothamBold
+				button.TextSize = 10
+				button.TextColor3 = Color3.fromRGB(180, 191, 220)
+				button.Text = label
+				button.Parent = toolbar
+				Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
+				local stroke = Instance.new("UIStroke")
+				stroke.Color = Color3.fromRGB(83, 98, 148)
+				stroke.Transparency = 0.55
+				stroke.Parent = button
+				button.MouseButton1Click:Connect(function()
+					s12 = sortKey
 					v3776()
 					v3766()
 				end)
-				t177[p892] = TextButton
+				t177[sortKey] = button
 			end
+			makeSortButton("Rarity", "rarity", 58)
+			makeSortButton("Sightings", "count", 72)
+			makeSortButton("Name", "name", 54)
 
-			v3800("Rarity", "rarity", 66)
-			v3800("Amount", "count", 66)
-			v3800("Name", "name", 58)
-
-			local TextButton = Instance.new("TextButton")
-
-			TextButton.Size = UDim2.fromOffset(54, 26)
-			TextButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-			TextButton.BackgroundTransparency = 0.88
-			TextButton.AutoButtonColor = false
-			TextButton.Font = Enum.Font.GothamBold
-			TextButton.TextSize = 12
-			TextButton.TextColor3 = v3697.btnText
-			TextButton.Text = "Clear"
-			TextButton.Parent = Frame
-			Instance.new("UICorner", TextButton).CornerRadius = UDim.new(0, 4)
-
-			local UIStroke = Instance.new("UIStroke", TextButton)
-
-			UIStroke.Color = v3697.accent
-			UIStroke.Thickness = 1
-			UIStroke.Transparency = 1
-			TextButton.MouseButton1Click:Connect(function()
+			local clearButton = Instance.new("TextButton")
+			clearButton.Name = "ClearLogs"
+			clearButton.Size = UDim2.fromOffset(58, 26)
+			clearButton.BackgroundColor3 = Color3.fromRGB(84, 48, 75)
+			clearButton.BackgroundTransparency = 0.08
+			clearButton.AutoButtonColor = true
+			clearButton.Font = Enum.Font.GothamBold
+			clearButton.TextSize = 10
+			clearButton.TextColor3 = Color3.fromRGB(255, 224, 235)
+			clearButton.Text = "Clear"
+			clearButton.Parent = toolbar
+			Instance.new("UICorner", clearButton).CornerRadius = UDim.new(0, 6)
+			clearButton.MouseButton1Click:Connect(function()
 				t174 = {}
 				v3766()
 			end)
 
-			local Frame2 = Instance.new("Frame")
-
-			Frame2.Position = UDim2.fromOffset(16, 38)
-			Frame2.Size = UDim2.new(1, -32, 0, 18)
-			Frame2.BackgroundTransparency = 1
-			Frame2.Parent = p890
-
-			local function v3806(p894, p895, p896, p897)
-				local TextLabel2 = Instance.new("TextLabel")
-
-				TextLabel2.BackgroundTransparency = 1
-				TextLabel2.Position = p895
-				TextLabel2.Size = p896
-				TextLabel2.Font = Enum.Font.GothamBold
-				TextLabel2.TextSize = 11
-				TextLabel2.TextColor3 = v3697.muted
-				TextLabel2.TextXAlignment = p897
-				TextLabel2.Text = p894
-				TextLabel2.Parent = Frame2
+			local columns = Instance.new("Frame")
+			columns.Position = UDim2.fromOffset(18, 82)
+			columns.Size = UDim2.new(1, -36, 0, 16)
+			columns.BackgroundTransparency = 1
+			columns.Parent = p890
+			local function column(text, x, width, align)
+				local label = Instance.new("TextLabel")
+				label.BackgroundTransparency = 1
+				label.Position = UDim2.new(x, 0, 0, 0)
+				label.Size = UDim2.new(width, 0, 1, 0)
+				label.Font = Enum.Font.GothamBold
+				label.TextSize = 9
+				label.TextColor3 = Color3.fromRGB(118, 135, 174)
+				label.TextXAlignment = align or Enum.TextXAlignment.Left
+				label.Text = text
+				label.Parent = columns
 			end
-
-			v3806("EGG", UDim2.fromOffset(26, 0), UDim2.new(0.5, -26, 1, 0), Enum.TextXAlignment.Left)
-			v3806("RARITY", UDim2.new(0.5, 0, 0, 0), UDim2.new(0.3, 0, 1, 0), Enum.TextXAlignment.Left)
-			v3806("AMOUNT", UDim2.new(0.8, 0, 0, 0), UDim2.new(0.2, -12, 1, 0), Enum.TextXAlignment.Right)
+			column("EGG", 0, 0.55)
+			column("RARITY / LAST SEEN", 0.55, 0.31)
+			column("SIGHTINGS", 0.78, 0.22, Enum.TextXAlignment.Right)
 
 			local ScrollingFrame = Instance.new("ScrollingFrame")
-
-			ScrollingFrame.Position = UDim2.fromOffset(14, 60)
-			ScrollingFrame.Size = UDim2.new(1, -28, 1, -68)
+			ScrollingFrame.Name = "EggLogList"
+			ScrollingFrame.Position = UDim2.fromOffset(14, 102)
+			ScrollingFrame.Size = UDim2.new(1, -28, 1, -106)
 			ScrollingFrame.BackgroundTransparency = 1
 			ScrollingFrame.BorderSizePixel = 0
-			ScrollingFrame.ScrollBarThickness = 3
-			ScrollingFrame.ScrollBarImageColor3 = v3697.accent
+			ScrollingFrame.ScrollBarThickness = 4
+			ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(103, 119, 185)
 			ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+			ScrollingFrame.ScrollingDirection = Enum.ScrollingDirection.Y
 			ScrollingFrame.Parent = p890
-
-			local UIListLayout2 = Instance.new("UIListLayout", ScrollingFrame)
-
-			UIListLayout2.Padding = UDim.new(0, 4)
-			UIListLayout2.SortOrder = Enum.SortOrder.LayoutOrder
+			local listLayout = Instance.new("UIListLayout")
+			listLayout.Padding = UDim.new(0, 6)
+			listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+			listLayout.Parent = ScrollingFrame
 			u3772 = ScrollingFrame
+
+			logEmptyState = Instance.new("TextLabel")
+			logEmptyState.Name = "EmptyState"
+			logEmptyState.AnchorPoint = Vector2.new(0.5, 0.5)
+			logEmptyState.Position = UDim2.new(0.5, 0, 0.58, 0)
+			logEmptyState.Size = UDim2.new(1, -36, 0, 54)
+			logEmptyState.BackgroundTransparency = 1
+			logEmptyState.Font = Enum.Font.GothamMedium
+			logEmptyState.TextSize = 12
+			logEmptyState.TextWrapped = true
+			logEmptyState.TextColor3 = Color3.fromRGB(144, 159, 192)
+			logEmptyState.Text = "No egg logs yet\nNew sightings will appear here automatically."
+			logEmptyState.Parent = p890
+
 			v3776()
 			v3766()
 		end
@@ -26691,7 +26639,7 @@ do
 				return
 			end
 
-			local name = "__SNE_Panel_" .. p962
+			local name = "__Velox_Panel_" .. p962
 
 			local function v4244()
 				local ok, result = pcall(function()
@@ -26847,7 +26795,7 @@ do
 			TextLabel5.TextSize = 16
 			TextLabel5.TextXAlignment = Enum.TextXAlignment.Left
 			TextLabel5.TextColor3 = t166.text
-			TextLabel5.Text = "Sena"
+			TextLabel5.Text = "Velox Hub"
 			TextLabel5.Parent = Frame2
 
 			local ImageLabel2 = Instance.new("ImageLabel")
@@ -26923,11 +26871,11 @@ do
 			TextLabel7.TextSize = 12
 			TextLabel7.TextXAlignment = Enum.TextXAlignment.Center
 			TextLabel7.TextColor3 = t166.text
-			TextLabel7.Text = "discord.gg/senahub"
+			TextLabel7.Text = "Steal an Egg • by Ovei"
 			TextLabel7.Parent = TextButton
 			TextButton.MouseButton1Click:Connect(function()
 				pcall(function()
-					setclipboard("https://discord.gg/senahub")
+					setclipboard("Velox Hub • Steal an Egg • by Ovei")
 				end)
 			end)
 
@@ -27129,347 +27077,264 @@ do
 		genv.ChloeX_ReopenPrompt = nil
 		genv.ChloeX_Instance = nil
 
-        local SenaLibOverride = {}
-        do
-        local WINDUI_VERSION = "1.6.66"
-        local windSource = "https://github.com/Footagesus/WindUI/releases/download/" .. WINDUI_VERSION .. "/main.lua"
-        local windOK, WindUI = pcall(function()
-            return loadstring(game:HttpGet(windSource))()
-        end)
+		local WindUI
+		local VeloxUI = {}
+		do
+			local version = "1.6.66"
+			local ok, result = pcall(function()
+				return loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/" .. version .. "/main.lua"))()
+			end)
+			if not ok or type(result) ~= "table" then
+				warn("[Velox Hub] WindUI 1.6.66 failed to load: " .. tostring(result))
+				return
+			end
+			WindUI = result
+			WindUI:AddTheme({
+				Name = "Velox Indigo",
+				Accent = Color3.fromHex("#6366F1"),
+				Background = Color3.fromHex("#0B1020"),
+				Outline = Color3.fromHex("#26304B"),
+				Text = Color3.fromHex("#F5F7FF"),
+				Placeholder = Color3.fromHex("#8B95B5"),
+				Button = Color3.fromHex("#25335A"),
+				Icon = Color3.fromHex("#8BA9FF")
+			})
+			WindUI:SetTheme("Velox Indigo")
+		end
 
-        if not windOK or type(WindUI) ~= "table" then
-            warn("[Sena] WindUI 1.6.66 failed to load")
-            return
-        end
+		local activeActionLists = {}
 
-        pcall(function() WindUI:SetNotificationLower(true) end)
+		local function stripRichText(value)
+			return tostring(value or ""):gsub("<[^>]*>", ""):gsub("%s+", " ")
+		end
 
-        local function plainText(value)
-            return tostring(value or ""):gsub("<[^>]->", "")
-        end
+		local function translateControlConfig(config, kind)
+			config = type(config) == "table" and config or {}
+			local out = {
+				Title = config.Title or config.Name or kind,
+				Desc = config.Desc or config.Content,
+				Icon = config.Icon,
+				Callback = config.Callback,
+				Locked = config.Locked == true
+			}
+			if kind == "Toggle" then
+				out.Value = config.Value
+				if out.Value == nil then out.Value = config.Default == true end
+				out.Type = config.Type == "Checkbox" and "Checkbox" or "Toggle"
+			elseif kind == "Slider" then
+				out.Value = {
+					Min = tonumber(config.Min) or 0,
+					Max = tonumber(config.Max) or 100,
+					Default = tonumber(config.Default) or tonumber(config.Min) or 0
+				}
+				out.Step = tonumber(config.Increment or config.Step) or 1
+				out.IsTextbox = config.IsTextbox == true
+				out.IsTooltip = config.IsTooltip ~= false
+			elseif kind == "Dropdown" then
+				out.Values = config.Values or config.Options or {}
+				out.Value = config.Value
+				if out.Value == nil then out.Value = config.Default end
+				out.Multi = config.Multi == true
+				out.AllowNone = config.AllowNone ~= false
+				out.SearchBarEnabled = #out.Values >= 10
+			elseif kind == "Input" then
+				out.Value = config.Value
+				if out.Value == nil then out.Value = config.Default or "" end
+				out.Placeholder = config.Placeholder or "Enter text..."
+				out.Type = config.Type == "Textarea" and "Textarea" or "Input"
+				out.InputIcon = config.InputIcon
+			elseif kind == "Paragraph" then
+				out.Image = config.Image
+				out.ImageSize = config.ImageSize
+				out.Thumbnail = config.Thumbnail
+				out.ThumbnailSize = config.ThumbnailSize
+				out.Color = config.Color
+			elseif kind == "Keybind" then
+				out.Value = config.Value or config.Default or Enum.KeyCode.F
+				out.CanChange = config.CanChange ~= false
+				out.Blacklist = config.Blacklist or {}
+			elseif kind == "Colorpicker" then
+				out.Default = config.Default or config.Value or Color3.fromRGB(99, 102, 241)
+				out.Transparency = config.Transparency or 0
+			end
+			if kind == "Button" then
+				out.Color = config.Color
+				out.Justify = config.Justify or "Between"
+				out.IconAlign = config.IconAlign or "Right"
+			end
+			return out
+		end
 
-        local function notifyWind(config)
-            config = type(config) == "table" and config or {}
-            pcall(function()
-                WindUI:Notify({
-                    Title = tostring(config.Title or "Sena"),
-                    Content = tostring(config.Content or config.Description or ""),
-                    Icon = config.Icon or "info",
-                    Duration = tonumber(config.Duration) or 3,
-                })
-            end)
-        end
+		local function createActionList(host, options)
+			options = options or {}
+			local list = {alive = true, rows = {}, empty = nil}
+			table.insert(activeActionLists, list)
+			function list:Destroy()
+				if not self.alive then return end
+				self.alive = false
+				for id, row in pairs(self.rows) do
+					if row.control then pcall(function() row.control:Destroy() end) end
+					self.rows[id] = nil
+				end
+				if self.empty then pcall(function() self.empty:Destroy() end); self.empty = nil end
+			end
+			local function describe(item)
+				local parts = {}
+				if item.sub and item.sub ~= "" then parts[#parts + 1] = stripRichText(item.sub) end
+				if item.status and item.status ~= "" then parts[#parts + 1] = stripRichText(item.status) end
+				if item.statusSub and item.statusSub ~= "" then parts[#parts + 1] = stripRichText(item.statusSub) end
+				return table.concat(parts, "  •  ")
+			end
+			function list:Alive()
+				return self.alive
+			end
+			function list:Update(items)
+				if not self.alive then return end
+				items = type(items) == "table" and items or {}
+				local active = {}
+				if #items == 0 then
+					for id, row in pairs(self.rows) do
+						if row.control then pcall(function() row.control:Destroy() end) end
+						self.rows[id] = nil
+					end
+					if not self.empty then
+						self.empty = host:Paragraph({Title = options.Title or "List", Desc = options.EmptyText or "No entries yet."})
+					end
+					return
+				end
+				if self.empty then pcall(function() self.empty:Destroy() end); self.empty = nil end
+				for index, item in ipairs(items) do
+					local id = tostring(item.id or index)
+					active[id] = true
+					local title = stripRichText(item.name or "Entry")
+					local desc = describe(item)
+					local row = self.rows[id]
+					if not row then
+						row = {item = item}
+						self.rows[id] = row
+						if item.button and type(item.onClick) == "function" then
+							row.control = host:Button({Title = title, Desc = desc, Icon = "user-round", Callback = function()
+									local current = row.item
+									if current and type(current.onClick) == "function" then
+										current.onClick(current, function(status, color)
+											pcall(function()
+												row.control:SetDesc(stripRichText(status) .. (color and ("  •  " .. tostring(color)) or ""))
+											end)
+										end)
+									end
+								end})
+						else
+							row.control = host:Paragraph({Title = title, Desc = desc})
+						end
+					else
+						row.item = item
+						pcall(function() row.control:SetTitle(title) end)
+						pcall(function() row.control:SetDesc(desc) end)
+					end
+				end
+				for id, row in pairs(self.rows) do
+					if not active[id] then
+						if row.control then pcall(function() row.control:Destroy() end) end
+						self.rows[id] = nil
+					end
+				end
+			end
+			return list
+		end
 
-        function SenaLibOverride.Notify(a, b)
-            notifyWind(a == SenaLibOverride and b or a)
-        end
+		local function makeHostAdapter(rawHost)
+			local adapter = {}
+			local function add(kind, config)
+				local methodMap = {
+					Button = "Button", Toggle = "Toggle", Slider = "Slider", Dropdown = "Dropdown",
+					Input = "Input", Paragraph = "Paragraph", Keybind = "Keybind", Colorpicker = "Colorpicker"
+				}
+				local methodName = methodMap[kind]
+				local method = methodName and rawHost[methodName]
+				if type(method) ~= "function" then
+					warn("[Velox Hub] WindUI element unavailable: " .. tostring(methodName))
+					return nil
+				end
+				return method(rawHost, translateControlConfig(config, kind))
+			end
+			adapter.AddButton = function(_, config) return add("Button", config) end
+			adapter.AddToggle = function(_, config) return add("Toggle", config) end
+			adapter.AddSlider = function(_, config) return add("Slider", config) end
+			adapter.AddDropdown = function(_, config) return add("Dropdown", config) end
+			adapter.AddInput = function(_, config) return add("Input", config) end
+			adapter.AddParagraph = function(_, config) return add("Paragraph", config) end
+			adapter.AddKeybind = function(_, config) return add("Keybind", config) end
+			adapter.AddColorPicker = function(_, config) return add("Colorpicker", config) end
+			adapter.AddSection = function(_, title, opened)
+				local method = rawHost.Section
+				if type(method) ~= "function" then
+					return adapter
+				end
+				local section = method(rawHost, {Title = tostring(title or "Section"), Opened = opened == true})
+				return makeHostAdapter(section)
+			end
+			adapter.AddSubSection = function(_, title)
+				return add("Paragraph", {Title = tostring(title or "Options"), Content = ""})
+			end
+			adapter.AddActionList = function(_, config) return createActionList(rawHost, config) end
+			adapter.AddLiveChat = function(_, config)
+				config = config or {}
+				return add("Paragraph", {Title = config.Title or "Live Chat", Content = "The original chat widget was bundled inside the removed third-party UI library; this source contains no chat transport to reconnect."})
+			end
+			adapter.AddSupportCard = function(_, config)
+				return add("Paragraph", {Title = "Support", Content = "The original support card's destination and handler were bundled inside the removed third-party UI library and were not present in the supplied source."})
+			end
+			return adapter
+		end
 
-        local function wrapControl(raw, kind, config)
-            config = type(config) == "table" and config or {}
-            local proxy = {
-                _raw = raw,
-                _kind = kind,
-                _default = config.Default,
-                _options = config.Options or config.Values or {},
-                _destroyed = false,
-                Value = config.Default,
-            }
+		function VeloxUI:Notify(config)
+			config = config or {}
+			return WindUI:Notify({Title = config.Title or "Velox Hub", Content = config.Content or config.Desc or "", Duration = config.Duration or 3, Icon = config.Icon or "info"})
+		end
 
-            if proxy.Value == nil then
-                proxy.Value = kind == "toggle" and false or kind == "dropdown" and (config.Multi and {} or nil) or kind == "input" and "" or config.Default
-            end
-
-            function proxy:Set(value)
-                self.Value = value
-                if not self._raw or self._destroyed then return end
-                if self._kind == "dropdown" and type(self._raw.Select) == "function" then
-                    pcall(self._raw.Select, self._raw, value)
-                elseif type(self._raw.Set) == "function" then
-                    pcall(self._raw.Set, self._raw, value)
-                end
-            end
-            function proxy:SetValue(value) self:Set(value) end
-            function proxy:LoadValue(value) self:Set(value) end
-            function proxy:ResetValue() self:Set(self._default) end
-            function proxy:SetOptions(options)
-                self._options = type(options) == "table" and options or {}
-                if self._raw and type(self._raw.Refresh) == "function" then
-                    pcall(self._raw.Refresh, self._raw, self._options)
-                end
-            end
-            function proxy:Refresh(options) self:SetOptions(options) end
-            function proxy:SetTitle(title)
-                if self._raw and type(self._raw.SetTitle) == "function" then
-                    pcall(self._raw.SetTitle, self._raw, tostring(title or ""))
-                end
-            end
-            function proxy:SetContent(content)
-                if self._raw and type(self._raw.SetDesc) == "function" then
-                    pcall(self._raw.SetDesc, self._raw, tostring(content or ""))
-                elseif self._raw and type(self._raw.SetContent) == "function" then
-                    pcall(self._raw.SetContent, self._raw, tostring(content or ""))
-                end
-            end
-            function proxy:Lock()
-                if self._raw and type(self._raw.Lock) == "function" then pcall(self._raw.Lock, self._raw) end
-            end
-            function proxy:Unlock()
-                if self._raw and type(self._raw.Unlock) == "function" then pcall(self._raw.Unlock, self._raw) end
-            end
-            function proxy:SetVisible(visible)
-                if self._raw and type(self._raw.SetVisible) == "function" then pcall(self._raw.SetVisible, self._raw, visible == true) end
-            end
-            function proxy:Destroy()
-                self._destroyed = true
-                if self._raw and type(self._raw.Destroy) == "function" then pcall(self._raw.Destroy, self._raw) end
-            end
-            function proxy:Alive() return not self._destroyed end
-            return proxy
-        end
-
-        local function wrapSection(rawSection, rawTab)
-            local section = { _raw = rawSection, _tab = rawTab }
-
-            function section:AddSubSection(title)
-                local sub = self._tab:Section({
-                    Title = tostring(title or ""),
-                    Opened = true,
-                    Box = true,
-                    BoxBorder = false,
-                })
-                return wrapSection(sub, self._tab)
-            end
-
-            function section:AddToggle(config)
-                config = type(config) == "table" and config or {}
-                local proxy
-                local raw = self._raw:Toggle({
-                    Title = tostring(config.Title or "Toggle"),
-                    Desc = tostring(config.Content or config.Desc or ""),
-                    Value = config.Default == true,
-                    Callback = function(value)
-                        if proxy then proxy.Value = value == true end
-                        if type(config.Callback) == "function" then config.Callback(value == true) end
-                    end,
-                })
-                proxy = wrapControl(raw, "toggle", config)
-                proxy.Value = config.Default == true
-                return proxy
-            end
-
-            function section:AddSlider(config)
-                config = type(config) == "table" and config or {}
-                local min = tonumber(config.Min) or 0
-                local max = tonumber(config.Max) or 100
-                local default = tonumber(config.Default)
-                if default == nil then default = min end
-                local proxy
-                local raw = self._raw:Slider({
-                    Title = tostring(config.Title or "Slider"),
-                    Desc = tostring(config.Content or config.Desc or ""),
-                    Step = tonumber(config.Increment) or 1,
-                    Value = { Min = min, Max = max, Default = default },
-                    Callback = function(value)
-                        if proxy then proxy.Value = value end
-                        if type(config.Callback) == "function" then config.Callback(value) end
-                    end,
-                })
-                proxy = wrapControl(raw, "slider", config)
-                proxy.Value = default
-                proxy._default = default
-                return proxy
-            end
-
-            function section:AddDropdown(config)
-                config = type(config) == "table" and config or {}
-                local options = config.Options or config.Values or {}
-                local initial = config.Default
-                if config.Multi and type(initial) ~= "table" then initial = {} end
-                local proxy
-                local raw = self._raw:Dropdown({
-                    Title = tostring(config.Title or "Dropdown"),
-                    Desc = tostring(config.Content or config.Desc or ""),
-                    Values = options,
-                    Value = initial,
-                    Multi = config.Multi == true,
-                    AllowNone = config.AllowNone == true or config.Multi == true,
-                    SearchBarEnabled = #options > 8,
-                    Callback = function(value)
-                        if proxy then proxy.Value = value end
-                        if type(config.Callback) == "function" then config.Callback(value) end
-                    end,
-                })
-                proxy = wrapControl(raw, "dropdown", config)
-                proxy.Value = initial
-                proxy._default = initial
-                proxy._options = options
-                return proxy
-            end
-
-            function section:AddInput(config)
-                config = type(config) == "table" and config or {}
-                local initial = config.Default == nil and "" or tostring(config.Default)
-                local proxy
-                local raw = self._raw:Input({
-                    Title = tostring(config.Title or "Input"),
-                    Desc = tostring(config.Content or config.Desc or ""),
-                    Placeholder = tostring(config.Placeholder or "Enter text..."),
-                    Value = initial,
-                    Callback = function(value)
-                        if proxy then proxy.Value = value end
-                        if type(config.Callback) == "function" then config.Callback(value) end
-                    end,
-                })
-                proxy = wrapControl(raw, "input", config)
-                proxy.Value = initial
-                proxy._default = initial
-                return proxy
-            end
-
-            function section:AddButton(config)
-                config = type(config) == "table" and config or {}
-                local raw = self._raw:Button({
-                    Title = tostring(config.Title or "Button"),
-                    Desc = tostring(config.Content or config.Desc or ""),
-                    Icon = config.Icon,
-                    Callback = function()
-                        if type(config.Callback) == "function" then config.Callback() end
-                    end,
-                })
-                return wrapControl(raw, "button", config)
-            end
-
-            function section:AddParagraph(config)
-                config = type(config) == "table" and config or {}
-                local raw = self._raw:Paragraph({
-                    Title = tostring(config.Title or ""),
-                    Desc = tostring(config.Content or config.Desc or ""),
-                    Image = config.Image,
-                })
-                local proxy = wrapControl(raw, "paragraph", config)
-                proxy.Value = config.Content or config.Desc or ""
-                local baseSetContent = proxy.SetContent
-                function proxy:SetContent(content)
-                    self.Value = content
-                    baseSetContent(self, content)
-                    if self._raw and type(self._raw.SetDesc) == "function" then
-                        pcall(self._raw.SetDesc, self._raw, tostring(content or ""))
-                    end
-                end
-                return proxy
-            end
-
-            function section:AddActionList(config)
-                config = type(config) == "table" and config or {}
-                local listSection = self._tab:Section({
-                    Title = tostring(config.Title or "List"),
-                    Opened = true,
-                    Box = true,
-                    BoxBorder = false,
-                })
-                local list = { _rows = {}, _controls = {}, _dead = false, _tab = self._tab }
-                function list:Alive() return not self._dead end
-                function list:Update(rows)
-                    if self._dead then return end
-                    for _, control in ipairs(self._controls) do pcall(function() control:Destroy() end) end
-                    self._controls = {}
-                    self._rows = type(rows) == "table" and rows or {}
-                    if #self._rows == 0 then
-                        local empty = listSection:Paragraph({ Title = tostring(config.EmptyText or "No entries"), Desc = "" })
-                        table.insert(self._controls, wrapControl(empty, "paragraph", {}))
-                        return
-                    end
-                    for _, row in ipairs(self._rows) do
-                        local rowName = plainText(row.name or row.Title or "Entry")
-                        local rowStatus = plainText(row.status or "")
-                        local rowSub = plainText(row.sub or row.statusSub or "")
-                        local desc = rowSub
-                        if row.statusSub and row.sub then desc = rowSub .. "  •  " .. plainText(row.statusSub) end
-                        if row.button and type(row.onClick) == "function" then
-                            local buttonProxy
-                            local rawButton = listSection:Button({
-                                Title = rowName .. (rowStatus ~= "" and ("  ·  " .. rowStatus) or ""),
-                                Desc = desc,
-                                Callback = function()
-                                    row.onClick(row, function(newStatus, newColor)
-                                        row.status = newStatus or row.status
-                                        row.buttonColor = newColor or row.buttonColor
-                                        task.defer(function()
-                                            if not self._dead then self:Update(self._rows) end
-                                        end)
-                                    end)
-                                end,
-                            })
-                            buttonProxy = wrapControl(rawButton, "button", {})
-                            table.insert(self._controls, buttonProxy)
-                        else
-                            local paragraph = listSection:Paragraph({
-                                Title = rowName .. (rowStatus ~= "" and ("  ·  " .. rowStatus) or ""),
-                                Desc = desc,
-                            })
-                            table.insert(self._controls, wrapControl(paragraph, "paragraph", {}))
-                        end
-                    end
-                end
-                function list:Destroy()
-                    self._dead = true
-                    for _, control in ipairs(self._controls) do pcall(function() control:Destroy() end) end
-                    self._controls = {}
-                end
-                return list
-            end
-
-            return section
-        end
-
-        local function wrapTab(rawTab)
-            local tab = { _raw = rawTab }
-            function tab:AddSection(title, opened)
-                if type(title) == "table" then
-                    title = title.Title or title.Name or "Section"
-                end
-                local raw = self._raw:Section({
-                    Title = tostring(title or "Section"),
-                    Opened = opened ~= false,
-                    Box = true,
-                    BoxBorder = false,
-                })
-                return wrapSection(raw, self._raw)
-            end
-            return tab
-        end
-
-        function SenaLibOverride:Window(config)
-            config = type(config) == "table" and config or {}
-            local rawWindow = WindUI:CreateWindow({
-                Title = tostring(config.Title or "Sena Hub"),
-                Author = tostring(config.Footer or "Steal An Egg") .. " • WindUI " .. WINDUI_VERSION,
-                Icon = "bird",
-                Size = UDim2.fromOffset(690, 560),
-                MinSize = Vector2.new(520, 380),
-                MaxSize = Vector2.new(940, 760),
-                ToggleKey = Enum.KeyCode.RightControl,
-                Theme = "Dark",
-                Resizable = true,
-                SideBarWidth = 190,
-                HideSearchBar = false,
-                ScrollBarEnabled = true,
-                Acrylic = false,
-                AutoScale = true,
-            })
-
-            local window = { _raw = rawWindow }
-            function window:AddTab(tabConfig)
-                tabConfig = type(tabConfig) == "table" and tabConfig or {}
-                local rawTab = self._raw:Tab({
-                    Title = tostring(tabConfig.Name or tabConfig.Title or "Tab"),
-                    Icon = tabConfig.Icon,
-                })
-                return wrapTab(rawTab)
-            end
-            return window
-        end
-        end
+		function VeloxUI:Window(config)
+			config = config or {}
+			local rawWindow = WindUI:CreateWindow({
+				Title = "Velox Hub",
+				Author = "by Ovei",
+				Icon = "egg",
+				Folder = "VeloxHub",
+				Size = UDim2.fromOffset(660, 560),
+				MinSize = Vector2.new(520, 380),
+				MaxSize = Vector2.new(900, 760),
+				ToggleKey = Enum.KeyCode.RightControl,
+				Theme = "Velox Indigo",
+				Resizable = true,
+				SideBarWidth = 190,
+				AutoScale = true,
+				Transparent = false,
+				Acrylic = false,
+				HideSearchBar = false
+			})
+			local windowAdapter = {}
+			if type(rawWindow.OnDestroy) == "function" then
+				rawWindow:OnDestroy(function()
+					for i = #activeActionLists, 1, -1 do
+						local list = activeActionLists[i]
+						if list then pcall(function() list:Destroy() end) end
+						activeActionLists[i] = nil
+					end
+				end)
+			end
+			windowAdapter.AddTab = function(_, tabConfig)
+				tabConfig = tabConfig or {}
+				local rawTab = rawWindow:Tab({Title = tabConfig.Title or tabConfig.Name or "Tab", Icon = tabConfig.Icon, Desc = tabConfig.Desc})
+				return makeHostAdapter(rawTab)
+			end
+			windowAdapter.AddForum = function(_, forumConfig)
+				forumConfig = forumConfig or {}
+				local rawTab = rawWindow:Tab({Title = forumConfig.Name or "Forum", Icon = forumConfig.Icon or "messages-square"})
+				local rawSection = rawTab:Section({Title = forumConfig.Section or "Forum"})
+				rawSection:Paragraph({Title = "Forum widget unavailable", Desc = "The legacy forum service was provided by the removed UI library and its transport is not included in this source."})
+				return makeHostAdapter(rawTab)
+			end
+			return windowAdapter
+		end
 
 		local function v4320(p965)
 			local t196 = {}
@@ -28180,7 +28045,7 @@ do
 
 				if not v4481 then
 					if not u4453 then
-						warn("[AutoMutation] " .. tostring(senaV4Config.MutationChoice or "Scrambled") .. " consumable habis / gak ada di inventory - ronde di-skip.")
+						warn("[Velox Hub AutoMutation] " .. tostring(senaV4Config.MutationChoice or "Scrambled") .. " consumable habis / gak ada di inventory - ronde di-skip.")
 						u4453 = true
 					end
 
@@ -29446,7 +29311,14 @@ do
 				end
 
 				if p1055 then
-					pcall(v2528)
+					local ok, enabled = pcall(v2528)
+					if not ok or enabled ~= true then
+						senaV4Config.AutoExecute = false
+						v2526.autoExecute = false
+						if getgenv then getgenv().SNE_AutoExecute = false end
+						if t216.autoExecute then pcall(function() t216.autoExecute:Set(false) end) end
+						return
+					end
 				else
 					pcall(v2530)
 				end
@@ -29535,6 +29407,7 @@ do
 					v612:setIndexObjective(senaV4Config.AutoIndex)
 				end
 			end
+
 			local t219 = {
 				"Set",
 				"SetValue",
@@ -29586,9 +29459,12 @@ do
 				"AddKeybind",
 				"AddColorPicker",
 				"AddActionList",
+				"AddLiveChat",
+				"AddSupportCard",
 				"AddSubSection",
 				"AddSection",
 				"AddTab",
+				"AddForum"
 			}
 
 			local function v4779(p1068)
@@ -29626,10 +29502,7 @@ do
 			end
 
 			v4730()
-			v4742 = SenaLibOverride:Window({
-				Title = "Sena Hub",
-				Footer = "Steal An Egg"
-			})
+			v4742 = VeloxUI:Window({Title = "Velox Hub", Footer = "Steal an Egg • by Ovei"})
 			v4779(v4742)
 			t216 = {}
 			t217 = { "Respawn Point" }
@@ -29664,14 +29537,13 @@ do
 			end
 
 			local v4791 = v4742:AddTab({
-				Name = "Events",
-				Icon = "calendar-days"
+				Name = "Admin Abuse",
+				Icon = "flame"
 			})
-			t216.eventsTab = v4791
 
 			t216.autoStealCapture = v4791:AddSection("Capture The Egg"):AddToggle({
-				Title = "Auto Carry Event Egg",
-				Content = "During Capture the Egg, picks up the event egg and keeps carrying it so your timer continues. Turn off Auto Steal before enabling this.",
+				Title = "Auto Steal Capture",
+				Content = "For the Capture The Egg event. Grabs the event egg for you and keeps you holding it in a safe spot so your time keeps going. Turn off normal Auto Steal while using this.",
 				Default = false,
 				Callback = v4732(v4724)
 			})
@@ -29679,20 +29551,20 @@ do
 			local Movement = v4791:AddSection("Movement")
 
 			t216.adminBoost = Movement:AddToggle({
-				Title = "Event Movement Boost",
-				Content = "Enables the movement boost during Admin Abuse events. Turn it off when the event is not active.",
+				Title = "Admin Abuse Boost",
+				Content = "Only works during Admin Abuse. Do not use it when there is no Admin Abuse.",
 				Default = false,
 				Callback = v4732(v4750)
 			})
 			t216.flyForCapture = Movement:AddToggle({
-				Title = "Fly While Carrying Event Egg",
-				Content = "After you pick up the event egg, moves you upward and keeps you airborne. Use during Capture the Egg only.",
+				Title = "Fly For Capture",
+				Content = "For the Capture The Egg event. After you pick up an egg, you fly up and stay still in the air so nobody can take it.",
 				Default = false,
 				Callback = v4732(v4722)
 			})
 			t216.instantGrab = Movement:AddToggle({
-				Title = "Quick Egg Pickup",
-				Content = "Pick up an egg with a quick tap instead of holding the interaction button.",
+				Title = "Instant Grab",
+				Content = "Picking up an egg only needs a quick tap instead of a long hold.",
 				Default = false,
 				Callback = v4732(v4723)
 			})
@@ -29703,14 +29575,14 @@ do
 				Callback = v4732(v4725)
 			})
 			t216.noclip = Movement:AddToggle({
-				Title = "No Clip",
+				Title = "Noclip",
 				Content = "Walk through walls and doors.",
 				Default = false,
 				Callback = v4732(v4560)
 			})
 			t216.autoRingEvent = v4791:AddSection("Ring Event"):AddToggle({
-				Title = "Auto Ring Event Route",
-				Content = "Automatically follows the route between the Forest and Angels & Demons. Turn off Auto Steal before using this.",
+				Title = "Auto Ring Event",
+				Content = "Starts at the safe zone, then glides Forest -> Angels & Demons -> back to Forest on a loop. Turn off Auto Steal while using this.",
 				Default = false,
 				Callback = v4732(v4569)
 			})
@@ -29719,9 +29591,9 @@ do
 		do
 			local v4793 = v4742:AddTab({
 				Name = "Main",
-				Icon = "house"
+				Icon = "home"
 			})
-			t216.mainTab = v4793
+			v4793:AddSection("Steal an Egg"):AddParagraph({Title = "Velox Hub", Content = "Steal an Egg • by Ovei"})
 			local v4794 = v4793:AddSection("Auto Steal")
 
 			t216.autoSteal = v4794:AddToggle({
@@ -29731,7 +29603,7 @@ do
 				Callback = v4732(v4526)
 			})
 			t216.helpFriend = v4794:AddToggle({
-				Title = "Drop Egg for a Friend",
+				Title = "Help Friend",
 				Content = "Instead of banking a stolen egg, drops it just before the safe zone line so a friend can pick it up.",
 				Default = false,
 				Callback = v4732(function(p1069)
@@ -29746,21 +29618,21 @@ do
 				end)
 			})
 			v4794:AddButton({
-				Title = "Egg Spawn Tracker",
-				Content = "Shows recent egg spawns, a timeline, and spawn estimates shared across active sessions.",
+				Title = "Egg Spawn Analyst",
+				Content = "Live global spawn tracker, timeline & forecast synced across active online players.",
 				Callback = v4732(function()
 					senaPanels.openAnalyst()
 				end)
 			})
 			t216.godMode = v4794:AddToggle({
-				Title = "Bat Aura",
-				Content = "Automatically swings the bat when a target is within range.",
+				Title = "Aura Bat",
+				Content = "",
 				Default = false,
 				Callback = v4732(v4528)
 			})
 			t216.stealMode = v4794:AddDropdown({
-				Title = "Pickup Mode",
-				Content = "Choose a pickup mode. Low Speed is intended for slower movement; High Speed prioritizes faster pickups.",
+				Title = "Steal Mode",
+				Content = "If you have good speed better use High Speed User, but if you are newbie, use Low Speed User",
 				Options = {
 					"Low Speed User",
 					"High Speed User",
@@ -29777,8 +29649,8 @@ do
 			end
 
 			t216.stealHold = v4794:AddSlider({
-				Title = "Pickup Speed Multiplier",
-				Content = "Adjusts pickup speed in Low Speed mode. Lower values may help if pickups keep failing.",
+				Title = "Low Speed Multiplier",
+				Content = "For Low Speed User. Higher = faster grab, lower = safer. Lower it if steals keep failing.",
 				Min = 1,
 				Max = 10,
 				Default = 5,
@@ -29790,8 +29662,8 @@ do
 
 			v4795:AddSubSection("Egg")
 			t216.names = v4795:AddDropdown({
-				Title = "Egg Name Filter",
-				Content = "Select which egg names to include. Leave this empty to allow any name.",
+				Title = "Filter By Egg Name",
+				Content = "Only steal these eggs. Leave empty for any egg.",
 				Options = v4522,
 				Multi = true,
 				Default = {},
@@ -29800,8 +29672,8 @@ do
 				end)
 			})
 			t216.rarities = v4795:AddDropdown({
-				Title = "Egg Rarities to Sell",
-				Content = "Select which rarities to include. Leave this empty to allow any rarity.",
+				Title = "Filter By Rarity",
+				Content = "Only steal these rarities. Leave empty for any rarity.",
 				Options = v4524,
 				Multi = true,
 				Default = {},
@@ -29811,8 +29683,8 @@ do
 			})
 			v4795:AddSubSection("Area & Value")
 			t216.areas = v4795:AddDropdown({
-				Title = "Area Filter",
-				Content = "Select the areas to include. Leave this empty to allow every area.",
+				Title = "Select Area",
+				Content = "Only steal from these areas. Leave empty for every area.",
 				Options = v4523,
 				Multi = true,
 				Default = {},
@@ -29821,29 +29693,29 @@ do
 				end)
 			})
 			t216.value = v4795:AddInput({
-				Title = "Minimum Income per Second",
-				Content = "Only include eggs that meet this income per second. You can use k, m, or b (for example, 500k).",
+				Title = "Steal By Value",
+				Content = "Minimum money per second. Supports k, m and b.",
 				Placeholder = "e.g. 500k, 2m, 1b",
 				Default = "",
 				Callback = v4732(v4539)
 			})
 			t216.mutations = v4795:AddDropdown({
-				Title = "Mutation Filter",
-				Content = "Select the mutations to include. Leave this empty to allow any mutation.",
+				Title = "Filter By Mutation",
+				Content = "Only steal eggs carrying one of these mutations. Leave empty for any egg.",
 				Options = t199,
 				Multi = true,
 				Default = {},
 				Callback = v4732(v4540)
 			})
 			t216.weight = v4795:AddInput({
-				Title = "Minimum Egg Weight",
-				Content = "Only include eggs at or above this weight. Enter 0 to allow any weight.",
+				Title = "Steal By Weight",
+				Content = "Minimum egg weight in kilograms. 0 accepts any weight.",
 				Placeholder = "e.g. 12000",
 				Default = "",
 				Callback = v4732(v4541)
 			})
 			t216.priority = v4795:AddDropdown({
-				Title = "Target Priority",
+				Title = "Steal Priority",
 				Content = "Which egg to go for first when more than one passes the filters.",
 				Options = {
 					"Rarity",
@@ -29854,8 +29726,8 @@ do
 				Callback = v4732(v4542)
 			})
 			t216.autoIndex = v4795:AddToggle({
-				Title = "Prioritize Missing Index Entries",
-				Content = "Also prioritizes eggs that can fill a missing Pet Index entry, even when they do not match the filters above.",
+				Title = "Auto Index",
+				Content = "Also steal eggs whose pet is still missing from your Pet Index, in any area, on top of the filters above. An egg you already hold counts as covered until it hatches.",
 				Default = false,
 				Callback = v4732(v4737)
 			})
@@ -29863,14 +29735,14 @@ do
 			local v4796 = v4793:AddSection("Egg ESP")
 
 			t216.eggEsp = v4796:AddToggle({
-				Title = "Show Egg Labels",
-				Content = "Displays a label over each egg so its details are easier to read from a distance.",
+				Title = "Egg ESP",
+				Content = "Draws a label over every egg on the field so you can read it from across the map.",
 				Default = false,
 				Callback = v4732(v4543)
 			})
 			t216.espDetails = v4796:AddDropdown({
-				Title = "Egg Label Details",
-				Content = "Choose which details appear on labels. Placed Eggs also shows eggs on plots.",
+				Title = "ESP Details",
+				Content = "What each label shows. Placed Eggs also labels the eggs sitting on plots.",
 				Options = {
 					"Name",
 					"Rarity",
@@ -29888,8 +29760,8 @@ do
 				Callback = v4732(v4544)
 			})
 			t216.backpackRates = v4796:AddToggle({
-				Title = "Backpack Income per Second",
-				Content = "Shows the income per second for each egg in its backpack slot.",
+				Title = "Backpack Value/s",
+				Content = "Shows how much money per second each egg in your backpack makes, right on its slot.",
 				Default = false,
 				Callback = v4732(v4546)
 			})
@@ -29902,19 +29774,22 @@ do
 				Icon = "repeat"
 			})
 
-			t216.privateTab = nil
+			t216.privateTab = v4742:AddTab({
+				Name = "Private Server",
+				Icon = "users"
+			})
 
 			local v4800 = v4799:AddSection("Egg Automation")
 
 			v4800:AddSubSection("Place")
 			t216.autoPlace = v4800:AddToggle({
-				Title = "Auto Place Eggs",
+				Title = "Auto Place Egg",
 				Content = "Places eggs from your inventory on your plot.",
 				Default = false,
 				Callback = v4732(v4566)
 			})
 			t216.placeRarity = v4800:AddDropdown({
-				Title = "Rarities to Place",
+				Title = "Place Egg Rarity",
 				Content = "Only place these rarities. Leave empty for all.",
 				Options = v4524,
 				Multi = true,
@@ -29925,14 +29800,14 @@ do
 			})
 			v4800:AddSubSection("Hatch")
 			t216.autoHatch = v4800:AddToggle({
-				Title = "Auto Hatch Ready Eggs",
+				Title = "Auto Hatch Egg",
 				Content = "Hatches your placed eggs when they are ready.",
 				Default = false,
 				Callback = v4732(v4567)
 			})
 			v4800:AddSubSection("Mutate")
 			t216.mutationChoice = v4800:AddDropdown({
-				Title = "Mutation Type",
+				Title = "Select Mutation",
 				Content = "Which mutation to apply to your placed eggs.",
 				Options = {
 					"Scrambled",
@@ -29943,7 +29818,7 @@ do
 				Callback = v4732(v4570)
 			})
 			t216.mutationSpecies = v4800:AddDropdown({
-				Title = "Egg Names to Mutate",
+				Title = "Mutate Egg Name",
 				Content = "Only mutate these eggs by name. Leave empty for every placed egg.",
 				Options = v4522,
 				Multi = true,
@@ -29951,7 +29826,7 @@ do
 				Callback = v4732(v4571)
 			})
 			t216.mutationRarity = v4800:AddDropdown({
-				Title = "Egg Rarities to Mutate",
+				Title = "Mutate Egg Rarity",
 				Content = "Only mutate placed eggs of these rarities. Leave empty for every rarity.",
 				Options = v4524,
 				Multi = true,
@@ -29959,7 +29834,7 @@ do
 				Callback = v4732(v4572)
 			})
 			t216.mutationRetry = v4800:AddToggle({
-				Title = "Retry Until Mutation Succeeds",
+				Title = "Retry Until Mutated",
 				Content = "Keep applying to one egg until it mutates or charges run out (10% per use).",
 				Default = true,
 				Callback = v4732(v4573)
@@ -29971,7 +29846,7 @@ do
 				Callback = v4732(v4568)
 			})
 			v4800:AddButton({
-				Title = "Apply Mutation Once",
+				Title = "Apply Mutation Now",
 				Content = "Run one mutation pass over your placed eggs right now.",
 				Callback = v4732(function()
 					task.spawn(function()
@@ -29987,14 +29862,14 @@ do
 			local v4802 = v4801:AddSection("Pet Selling")
 
 			t216.autoSell = v4802:AddToggle({
-				Title = "Auto Sell Pets",
-				Content = "Sells pets that match the filters below. Favorited, placed, and equipped pets are kept.",
+				Title = "Auto Sell Pet",
+				Content = "Sells pets that match a filter below. Favorite, placed and equipped pets are kept.",
 				Default = false,
 				Callback = v4732(v4574)
 			})
 			v4802:AddSubSection("Filter")
 			v4519 = v4802:AddDropdown({
-				Title = "Pet Names to Sell",
+				Title = "Pet Name Filter",
 				Content = "Pets to sell by name. Pick All for every name.",
 				Options = v4525,
 				Multi = true,
@@ -30004,7 +29879,7 @@ do
 				end)
 			})
 			v4520 = v4802:AddDropdown({
-				Title = "Pet Rarities to Sell",
+				Title = "Pet Rarity Filter",
 				Content = "Pets to sell by rarity. Pick All for every rarity.",
 				Options = v4330(v4524),
 				Multi = true,
@@ -30015,7 +29890,7 @@ do
 			})
 			t216.sellPetValue = v4802:AddInput({
 				Flag = "sellPetValue",
-				Title = "Pet Income Limit (per second)",
+				Title = "Sell By Value (max money/s)",
 				Content = "Only sell pets whose money per second is this or lower. Blank = no value limit. Supports k, m, b.",
 				Placeholder = "e.g. 100k, 2m",
 				Default = "",
@@ -30025,13 +29900,13 @@ do
 			local v4803 = v4801:AddSection("Egg Selling")
 
 			t216.autoSellEgg = v4803:AddToggle({
-				Title = "Auto Sell Eggs",
-				Content = "Sells eggs that have not been placed and match the selected rarities.",
+				Title = "Auto Sell Egg",
+				Content = "Sells unplaced eggs of the rarities below.",
 				Default = false,
 				Callback = v4732(v4575)
 			})
 			v4521 = v4803:AddDropdown({
-				Title = "Egg Rarities to Sell",
+				Title = "Egg Rarity Filter",
 				Content = "Egg rarities to sell. Pick All for every rarity.",
 				Options = v4330(v4524),
 				Multi = true,
@@ -30042,24 +29917,27 @@ do
 			})
 			t216.sellEggValue = v4803:AddInput({
 				Flag = "sellEggValue",
-				Title = "Egg Income Limit (per second)",
+				Title = "Sell By Value (max money/s)",
 				Content = "Only sell eggs whose money per second is this or lower. Blank = no value limit. Supports k, m, b.",
 				Placeholder = "e.g. 100k, 2m",
 				Default = "",
 				Callback = v4732(v4577)
 			})
 
-			local v4804 = t216.eventsTab
+			local v4804 = v4742:AddTab({
+				Name = "Events",
+				Icon = "flame"
+			})
 			local v4805 = v4801:AddSection("Pet Favorite")
 
 			t216.autoFavorite = v4805:AddToggle({
-				Title = "Auto Favorite Pets",
-				Content = "Favorites pets that match the rule below, helping keep them out of Auto Sell and Auto Fuse.",
+				Title = "Auto Favorite",
+				Content = "Marks every pet that matches the rule below as a favorite, so Auto Sell and Auto Fuse leave it alone.",
 				Default = false,
 				Callback = v4732(v4548)
 			})
 			t216.favoriteRule = v4805:AddDropdown({
-				Title = "Favorite By",
+				Title = "Favorite Rule",
 				Content = "Match pets by rarity or by species.",
 				Options = {
 					"Rarity",
@@ -30070,7 +29948,7 @@ do
 			})
 			v4805:AddSubSection("Only when Rule = Rarity")
 			t216.favoriteRarities = v4805:AddDropdown({
-				Title = "Rarities to Favorite",
+				Title = "Rarities to Keep",
 				Content = "Pets of these rarities get favorited.",
 				Options = v4524,
 				Multi = true,
@@ -30079,7 +29957,7 @@ do
 			})
 			v4805:AddSubSection("Only when Rule = Species")
 			t216.favoriteSpecies = v4805:AddDropdown({
-				Title = "Species to Favorite",
+				Title = "Species to Keep",
 				Content = "Pets of these species get favorited.",
 				Options = v4522,
 				Multi = true,
@@ -30087,7 +29965,7 @@ do
 				Callback = v4732(v4551)
 			})
 			t216.unfavoriteAll = v4805:AddButton({
-				Title = "Unfavorite All Pets",
+				Title = "Unfavorite Everything",
 				Content = "Clears the favorite flag on every pet you own.",
 				Callback = v4732(function()
 					local __SenaV4PetBarn = genv.__SenaV4PetBarn
@@ -30097,7 +29975,7 @@ do
 						n83 = __SenaV4PetBarn.unfavoriteAll() or 0
 					end
 
-					SenaLibOverride:Notify({
+					VeloxUI:Notify({
 						Title = "Pet Favorite",
 						Content = n83 .. " pets unfavorited",
 						Duration = 3
@@ -30108,13 +29986,13 @@ do
 			local v4808 = v4801:AddSection("Pet Fusion")
 
 			t216.autoFuse = v4808:AddToggle({
-				Title = "Auto Fuse Matching Pets",
-				Content = "Combines matching pets through the Fusion machine. Favorited and equipped pets are not used.",
+				Title = "Auto Fuse",
+				Content = "Feeds three matching pets into the Fusion machine over and over. Favorited and equipped pets are never used.",
 				Default = false,
 				Callback = v4732(v4556)
 			})
 			t216.fuseRule = v4808:AddDropdown({
-				Title = "Fusion Selection",
+				Title = "Fusion Rule",
 				Content = "Fuse anything that passes the rarity filter, or only the species you pick below.",
 				Options = {
 					"Any Species",
@@ -30124,7 +30002,7 @@ do
 				Callback = v4732(v4557)
 			})
 			t216.fuseRarities = v4808:AddDropdown({
-				Title = "Pet Rarities to Fuse",
+				Title = "Rarities to Fuse",
 				Content = "Only fuse pets of these rarities. Leave empty for any rarity.",
 				Options = v4524,
 				Multi = true,
@@ -30133,7 +30011,7 @@ do
 			})
 			v4808:AddSubSection("Only when Rule = Selected Species")
 			t216.fuseSpecies = v4808:AddDropdown({
-				Title = "Pet Species to Fuse",
+				Title = "Species to Fuse",
 				Content = "Only these species go into the machine.",
 				Options = v4522,
 				Multi = true,
@@ -30144,26 +30022,26 @@ do
 			local v4809 = v4799:AddSection("Equip & Collect")
 
 			t216.autoEquipBest = v4809:AddToggle({
-				Title = "Auto Equip Strongest Pets",
-				Content = "Automatically equips your strongest available pets when better ones are obtained.",
+				Title = "Auto Equip Best",
+				Content = "Keeps your strongest pets equipped as better ones hatch.",
 				Default = false,
 				Callback = v4732(v4552)
 			})
 			t216.autoClaimOffline = v4809:AddToggle({
-				Title = "Claim Offline Income",
-				Content = "Claims income your base earned while you were away whenever it is available.",
+				Title = "Collect Offline Income",
+				Content = "Claims the money your base earned while you were away, as soon as there is any.",
 				Default = false,
 				Callback = v4732(v4553)
 			})
 			t216.autoBaseUpgrade = v4809:AddToggle({
 				Title = "Auto Upgrade Base",
-				Content = "Purchases the next base upgrade as soon as you can afford it.",
+				Content = "Buys the next base tier the moment you can afford it.",
 				Default = false,
 				Callback = v4732(v4554)
 			})
 			t216.autoClaimAlmanac = v4809:AddToggle({
-				Title = "Auto Claim Index Rewards",
-				Content = "Claims available rewards from the Pet Index.",
+				Title = "Auto Claim Almanac",
+				Content = "Redeems every Pet Index reward that is ready. This is the reward claim, not the steal objective.",
 				Default = false,
 				Callback = v4732(v4555)
 			})
@@ -30179,8 +30057,8 @@ do
 						v4811, s18 = __SenaV4Upgrades.upgradeBase()
 					end
 
-					local v4813 = SenaLibOverride
-					local Notify = SenaLibOverride.Notify
+					local v4813 = VeloxUI
+					local Notify = VeloxUI.Notify
 					local t221 = {
 						Title = "Base"
 					}
@@ -30204,7 +30082,7 @@ do
 			})
 
 			t216.bloomAutoNet = v4818:AddToggle({
-				Title = "Auto Claim Butterfly Net",
+				Title = "Auto Claim Net",
 				Content = "Goes into the Enchanted Tree and claims your free Butterfly Net once.",
 				Default = false,
 				Callback = v4732(function(p1077)
@@ -30212,7 +30090,7 @@ do
 				end)
 			})
 			t216.bloomAutoCatch = v4818:AddToggle({
-				Title = "Auto Catch Butterflies",
+				Title = "Auto Catch",
 				Content = "During every Bloom (every 30 min, 5 min long) flies to the Enchanted Forest, equips the net and catches with the Catch Mode below.",
 				Default = false,
 				Callback = v4732(function(p1078)
@@ -30235,7 +30113,7 @@ do
 				end)
 			})
 			t216.bloomTiers = v4818:AddDropdown({
-				Title = "Butterfly Tiers to Catch",
+				Title = "Catch Tiers",
 				Content = "Only swing at these butterflies. Leave empty to catch every tier.",
 				Options = __SenaV4ButterflyRuntime and __SenaV4ButterflyRuntime.tierOptions() or {
 					"Radiant",
@@ -30252,7 +30130,7 @@ do
 				end)
 			})
 			t216.bloomEsp = v4818:AddToggle({
-				Title = "Show Butterfly Labels",
+				Title = "Butterfly ESP",
 				Content = "Shows every butterfly's tier and distance while a Bloom is live.",
 				Default = false,
 				Callback = v4732(function(p1081)
@@ -30261,7 +30139,7 @@ do
 			})
 			v4818:AddSubSection("Trade & Craft")
 			t216.bloomAutoTrade = v4818:AddToggle({
-				Title = "Auto Trade Up Butterflies",
+				Title = "Auto Trade Up",
 				Content = "After each Bloom, trades your butterflies up at the machine inside the Enchanted Tree.",
 				Default = false,
 				Callback = v4732(function(p1082)
@@ -30272,7 +30150,7 @@ do
 			local v4821 = __SenaV4ButterflyRuntime and __SenaV4ButterflyRuntime.recipeOptions() or { "All Recipes" }
 
 			t216.bloomRecipe = v4818:AddDropdown({
-				Title = "Butterfly Trade Recipe",
+				Title = "Trade Recipe",
 				Content = "Which trade Auto Trade Up runs. For Essence only trades up what the essence recipe is still short of.",
 				Options = v4821,
 				Multi = false,
@@ -30315,8 +30193,8 @@ do
 								result2 = v4826
 							end
 
-							local v4827 = SenaLibOverride
-							local Notify = SenaLibOverride.Notify
+							local v4827 = VeloxUI
+							local Notify = VeloxUI.Notify
 							local t222 = {
 								Title = "Butterfly Bloom"
 							}
@@ -30382,7 +30260,7 @@ do
 								t223[#t223 + 1] = ("%s %d"):format(v4832[v] and v4832[v].name or v, snap.counts and snap.counts[v] or 0)
 							end
 
-							v4819:SetContent(("%s\n%s  ·  Essence %d  ·  Caught %d\n%s\n%s"):format(v4833, snap.net and (snap.holding and "Net equipped" or "Net owned") or "No Butterfly Net", snap.essence or 0, snap.caught or 0, table.concat(t223, "  ·  "), tostring(__SenaV4ButterflyRuntime.status or "Idle")))
+							v4819:SetDesc(("%s\n%s  ·  Essence %d  ·  Caught %d\n%s\n%s"):format(v4833, snap.net and (snap.holding and "Net equipped" or "Net owned") or "No Butterfly Net", snap.essence or 0, snap.caught or 0, table.concat(t223, "  ·  "), tostring(__SenaV4ButterflyRuntime.status or "Idle")))
 						end)
 					end
 
@@ -30397,13 +30275,13 @@ do
 				Content = "Dr Scramble's shop, trade-in and boss still run while the event is live. The drones, lost parts and vault are gone from the game."
 			})
 			t216.scrambleBuy = v4839:AddToggle({
-				Title = "Auto Buy Event Shop Items",
+				Title = "Auto Buy Shop",
 				Content = "Spends samples on the shop items you pick below, as soon as you can afford them.",
 				Default = false,
 				Callback = v4732(v4564)
 			})
 			t216.scrambleBuyList = v4839:AddDropdown({
-				Title = "Event Items to Buy",
+				Title = "Shop Buy List",
 				Content = "Which shop items Auto Buy should purchase. This list fills in once the event shop is open.",
 				Options = t218,
 				Multi = true,
@@ -30412,7 +30290,7 @@ do
 			})
 			v4839:AddSubSection("Trade-In (Experimental Pets)")
 			t216.scrambleTradeInTrade = v4839:AddToggle({
-				Title = "Auto Trade In Pets",
+				Title = "Auto Trade-In",
 				Content = "When the recipe's three requirements are covered, sacrifices the cheapest pet that fits each slot. Favorited, equipped, placed and fusing pets are never spent.",
 				Default = false,
 				Callback = v4732(function(p1091)
@@ -30420,7 +30298,7 @@ do
 				end)
 			})
 			t216.scrambleTradeInReroll = v4839:AddToggle({
-				Title = "Auto Use Free Reroll",
+				Title = "Auto Free Reroll",
 				Content = "When pets are missing and a free reroll is left, rerolls the recipe instead of waiting.",
 				Default = false,
 				Callback = v4732(function(p1092)
@@ -30428,7 +30306,7 @@ do
 				end)
 			})
 			t216.scrambleTradeInBanners = v4839:AddDropdown({
-				Title = "Banners for Trade In",
+				Title = "Target Banners",
 				Content = "Only work the trade-in while one of these banners is up. Leave empty to accept any banner.",
 				Options = {
 					"Biohazard Pets",
@@ -30440,7 +30318,7 @@ do
 				Callback = v4732(v4545)
 			})
 			v4839:AddButton({
-				Title = "Trade In Once",
+				Title = "Trade-In Once",
 				Content = "Runs one sacrifice right now, even with Auto Trade-In off.",
 				Callback = v4732(function()
 					local __SenaV4ScrambleTradeIn = genv.__SenaV4ScrambleTradeIn
@@ -30451,7 +30329,7 @@ do
 						v4841, s19 = __SenaV4ScrambleTradeIn.tradeOnce()
 					end
 
-					SenaLibOverride:Notify({
+					VeloxUI:Notify({
 						Title = "Dr Scramble",
 						Content = v4841 and "Sacrifice complete" or tostring(s19),
 						Duration = 4
@@ -30470,7 +30348,7 @@ do
 						v4844, s20 = __SenaV4ScrambleTradeIn.reroll()
 					end
 
-					SenaLibOverride:Notify({
+					VeloxUI:Notify({
 						Title = "Dr Scramble",
 						Content = v4844 and "Recipe rerolled" or tostring(s20),
 						Duration = 4
@@ -30478,13 +30356,13 @@ do
 				end)
 			})
 			v4839:AddButton({
-				Title = "Open Trade In Menu",
+				Title = "Open Trade-In UI",
 				Content = "Opens Dr Scramble's Lab window so you can pick pets by hand.",
 				Callback = v4732(function()
 					if not pcall(function()
 						require(ReplicatedStorage.Client.Tabs).Activate("DrScrambleTradeIn")
 					end) then
-						SenaLibOverride:Notify({
+						VeloxUI:Notify({
 							Title = "Dr Scramble",
 							Content = "Could not open the trade-in window",
 							Duration = 3
@@ -30504,7 +30382,7 @@ do
 
 					if __SenaV4ScrambleTradeIn then
 						pcall(function()
-							v4846:SetContent(string.format([[%s  ·  %s
+							v4846:SetDesc(string.format([[%s  ·  %s
 Rotates in %02d:%02d  ·  Pity %d/%d  ·  Free rerolls %d  ·  Traded %d
 Recipe (%d/%d): %s
 Held: %s
@@ -30517,7 +30395,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			end)
 			v4839:AddSubSection("Boss Fight")
 			t216.scrambleBossAuto = v4839:AddToggle({
-				Title = "Auto Fight Event Boss",
+				Title = "Auto Boss",
 				Content = "When Dr Scramble's boss is live, walks into the arena portal, joins the fight, hits the nearest target with your bat and breaks free from grabs. The clear reward lands automatically. While Auto Steal is on and this is off, an accidental touch on the arena portal is bounced back out so your steal is never hijacked.",
 				Default = false,
 				Callback = v4732(function(p1093)
@@ -30540,7 +30418,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 
 					if __SenaV4ScrambleBoss then
 						pcall(function()
-							v4848:SetContent(string.format("%s  ·  joins %d  ·  hits %d", tostring(__SenaV4ScrambleBoss.status), __SenaV4ScrambleBoss.joins or 0, __SenaV4ScrambleBoss.hits or 0))
+							v4848:SetDesc(string.format("%s  ·  joins %d  ·  hits %d", tostring(__SenaV4ScrambleBoss.status), __SenaV4ScrambleBoss.joins or 0, __SenaV4ScrambleBoss.hits or 0))
 						end)
 					end
 
@@ -30551,7 +30429,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local Treadmill = v4799:AddSection("Treadmill")
 
 			t216.autoTreadmill = Treadmill:AddToggle({
-				Title = "Auto Train on Treadmill",
+				Title = "Auto Treadmill",
 				Content = "Walks to your treadmill and farms speed whenever nothing else is running.",
 				Default = false,
 				Callback = v4732(v4529)
@@ -30567,26 +30445,24 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 		do
 			local v4851 = v4742:AddTab({
 				Name = "Misc",
-				Icon = "sliders-horizontal"
+				Icon = "settings"
 			})
-			t216.miscTab = v4851
-			t216.privateTab = v4851
 			local Performance = v4851:AddSection("Performance")
 
 			t216.startupBoost = Performance:AddToggle({
-				Title = "Startup Performance Boost",
+				Title = "Startup Boost",
 				Content = "Lowers graphics when the script starts. Turn it off to get the graphics back; hidden pets and eggs return after a rejoin.",
 				Default = true,
 				Callback = v4732(v4717)
 			})
 			t216.boostFps = Performance:AddToggle({
-				Title = "Improve FPS",
+				Title = "Boost FPS",
 				Content = "Removes extra map details and other players' plots for more FPS.",
 				Default = false,
 				Callback = v4732(v4719)
 			})
 			t216.uncapFps = Performance:AddToggle({
-				Title = "Raise FPS Limit",
+				Title = "Uncap FPS",
 				Content = "Raises the FPS cap to 240.",
 				Default = true,
 				Callback = v4732(v4720)
@@ -30595,13 +30471,13 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local Guard = v4851:AddSection("Guard")
 
 			t216.antiGuardKnockback = Guard:AddToggle({
-				Title = "Prevent Guard Knockback",
+				Title = "Anti Guard Knockback",
 				Content = "Cancels the knockback the Forest guard puts on you, so a hit never throws you off the lane.",
 				Default = true,
 				Callback = v4732(v4547)
 			})
 			t216.antiHitGuard = Guard:AddToggle({
-				Title = "Avoid Guard Hits",
+				Title = "Anti Hit Guard",
 				Content = "For eggs you pick up by hand. Pins you in the safe zone behind a look-alike clone until the guard goes back to sleep. Auto Steal has its own guard handling and always wins.",
 				Default = false,
 				Callback = v4732(v4726)
@@ -30617,7 +30493,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			Windows:AddButton({
-				Title = "Egg List",
+				Title = "Egg Board",
 				Content = "Sortable list of the eggs currently up for grabs.",
 				Callback = v4732(function()
 					senaPanels.openBoard()
@@ -30638,7 +30514,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			Windows:AddButton({
-				Title = "Egg Data and Spawn History",
+				Title = "Egg Data & History",
 				Content = "Drop-table values per area, plus what has actually spawned this session.",
 				Callback = v4732(function()
 					senaPanels.openAnalyst()
@@ -30665,14 +30541,14 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local v4855 = v4851:AddSection("Server Hop")
 
 			t216.hopNoMatch = v4855:AddToggle({
-				Title = "Change Server When No Eggs Match",
+				Title = "Hop When Nothing Matches",
 				Content = "Hop to the emptiest server when no egg matches your filters.",
 				Default = false,
 				Callback = v4732(v4531)
 			})
 			v4855:AddSubSection("Limits")
 			t216.hopCooldown = v4855:AddSlider({
-				Title = "Server Hop Delay",
+				Title = "Hop Cooldown",
 				Content = "Seconds between auto hops and wait after rejoining.",
 				Min = 1,
 				Max = 60,
@@ -30683,12 +30559,12 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 
 			local v4856 = t216.privateTab:AddSection("Find Private Server", true)
 			local v4857 = v4856:AddParagraph({
-				Title = "Current Server Status",
+				Title = "Current Server",
 				Content = "Checking..."
 			})
 
 			t216.privateServerMax = v4856:AddDropdown({
-				Title = "Maximum Players",
+				Title = "Max Players",
 				Content = "The most players you want in your server, you included. 2 (you + 1) is the easiest to find.",
 				Options = {
 					"1",
@@ -30702,7 +30578,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				Callback = v4732(v4532)
 			})
 			v4856:AddButton({
-				Title = "Find a Quieter Server Now",
+				Title = "Hop Server Now",
 				Content = "Moves you to a quieter server right away.",
 				Callback = v4732(function()
 					task.spawn(function()
@@ -30711,7 +30587,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			t216.privateServerAuto = v4856:AddToggle({
-				Title = "Auto Find a Quieter Server",
+				Title = "Auto Hop",
 				Content = "Keeps moving you to quieter servers until the player count is at or under your max.",
 				Default = false,
 				Callback = v4732(v4533)
@@ -30725,7 +30601,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 					if v4859 ~= v4858 then
 						v4858 = v4859
 						pcall(function()
-							v4857:SetContent(v4859)
+							v4857:SetDesc(v4859)
 						end)
 					end
 
@@ -30736,7 +30612,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local Roaming = v4851:AddSection("Roaming")
 
 			t216.waypoint = Roaming:AddDropdown({
-				Title = "Teleport Destination",
+				Title = "Waypoint",
 				Content = "Pick a place, then hit Teleport below.",
 				Options = t217,
 				Default = t217[1],
@@ -30745,7 +30621,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			Roaming:AddButton({
-				Title = "Teleport to Selected Destination",
+				Title = "Teleport To Waypoint",
 				Content = "Moves you straight to the waypoint you picked.",
 				Callback = v4732(function()
 					local __SenaV4Roaming = genv.__SenaV4Roaming
@@ -30755,8 +30631,8 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 						v4862 = __SenaV4Roaming.teleportWaypoint(u4745) == true
 					end
 
-					SenaLibOverride:Notify({
-						Title = "Teleport Destination",
+					VeloxUI:Notify({
+						Title = "Waypoint",
 						Content = v4862 and "Moved to " .. tostring(u4745) or "That waypoint is not in this server",
 						Duration = 3
 					})
@@ -30766,28 +30642,28 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local v4863 = v4851:AddSection("Run Once")
 
 			v4863:AddButton({
-				Title = "Place Ready Eggs Once",
+				Title = "Place Everything Now",
 				Content = "Runs one pass of Auto Place, even while the toggle is off.",
 				Callback = v4732(function()
 					runOnce("AutoPlace", t24.AutoPlaceLoop)
 				end)
 			})
 			v4863:AddButton({
-				Title = "Hatch Ready Eggs Once",
+				Title = "Hatch Everything Ready",
 				Content = "Runs one pass of Auto Hatch, even while the toggle is off.",
 				Callback = v4732(function()
 					runOnce("AutoHatch", t24.AutoHatchLoop)
 				end)
 			})
 			v4863:AddButton({
-				Title = "Sell Matching Pets Once",
+				Title = "Sell Pets Now",
 				Content = "Runs one pass of Auto Sell Pet using the filters above.",
 				Callback = v4732(function()
 					runOnce("AutoSell", t24.startAutoSellLoop)
 				end)
 			})
 			v4863:AddButton({
-				Title = "Sell Matching Eggs Once",
+				Title = "Sell Eggs Now",
 				Content = "Runs one pass of Auto Sell Egg using the filters above.",
 				Callback = v4732(function()
 					runOnce("AutoSellEgg", t24.startAutoSellEggLoop)
@@ -30797,19 +30673,19 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local Session = v4851:AddSection("Session")
 
 			t216.bottingMode = Session:AddToggle({
-				Title = "Low-Render Mode",
-				Content = "Turns off 3D rendering and dims the screen while enabled to reduce graphics work. Other script tasks keep running.",
+				Title = "Botting Mode",
+				Content = "Turns off 3D rendering and covers the screen in black. Everything keeps running, your GPU does not.",
 				Default = false,
 				Callback = v4732(v4561)
 			})
 			t216.antiCutscene = Session:AddToggle({
-				Title = "Skip Cutscenes",
+				Title = "Anti Cutscene",
 				Content = "Closes event cutscenes and the intro as soon as the game opens them, so nothing locks your camera.",
 				Default = false,
 				Callback = v4732(v4562)
 			})
 			Session:AddButton({
-				Title = "Rejoin Current Server",
+				Title = "Rejoin This Server",
 				Content = "Teleports you back into the exact server you are in now.",
 				Callback = v4732(function()
 					pcall(function()
@@ -30818,7 +30694,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			Session:AddButton({
-				Title = "Stop Script and Close Hub",
+				Title = "Stop & Unload",
 				Content = "Turns every loop off and closes the hub. Run the script again to bring it back.",
 				Callback = v4732(function()
 					for _, v in ipairs({
@@ -30861,31 +30737,51 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local Player = v4851:AddSection("Player")
 
 			t216.antiAfk = Player:AddToggle({
-				Title = "Prevent Idle Disconnect",
+				Title = "Anti AFK",
 				Content = "Blocks the game's idle kick while the script runs.",
 				Default = true,
 				Callback = v4732(v4727)
 			})
 			t216.autoReconnect = Player:AddToggle({
-				Title = "Reconnect After Disconnect",
+				Title = "Auto Reconnect",
 				Content = "Automatically reconnects you back to the server upon kick or disconnect.",
 				Default = true,
 				Callback = v4732(v4728)
 			})
+			t216.autoExecuteURL = Player:AddInput({
+				Title = "Migrated Script HTTPS URL",
+				Content = "Raw HTTPS URL of your hosted Velox Hub Lua file. Required for Auto Execute after rejoin.",
+				Placeholder = "https://raw.githubusercontent.com/.../VeloxHub.lua",
+				Default = tostring(genv.__VeloxHubAutoExecuteUrl or senaV4Config.AutoExecuteURL or ""),
+				Callback = v4732(function(value)
+					local sourceUrl = tostring(value or "")
+					if sourceUrl == "" or sourceUrl:match("^https://") then
+						senaV4Config.AutoExecuteURL = sourceUrl
+						genv.__VeloxHubAutoExecuteUrl = sourceUrl
+					else
+						senaV4Config.AutoExecuteURL = ""
+						genv.__VeloxHubAutoExecuteUrl = ""
+						VeloxUI:Notify({Title = "Invalid URL", Content = "Use a raw HTTPS URL for the migrated script.", Icon = "alert-circle"})
+					end
+				end)
+			})
 			t216.autoExecute = Player:AddToggle({
-				Title = "Run Again After Rejoin",
-				Content = "Prepares the bootstrapper so the script runs automatically after teleport or reconnect.",
+				Title = "Auto Execute (Rejoin)",
+				Content = "Runs the hosted migrated script after a teleport or reconnect. Set the HTTPS URL above first.",
 				Default = false,
 				Callback = v4732(v4729)
 			})
 		end
 
 		do
-			local v4869 = t216.mainTab
-			local v4870 = v4869:AddSection("Player Carriers")
+			local v4869 = v4742:AddTab({
+				Name = "Steal Players",
+				Icon = "swords"
+			})
+			local v4870 = v4869:AddSection("Auto Steal")
 
 			t216.stealPlayers = v4870:AddToggle({
-				Title = "Auto Target Egg Carriers",
+				Title = "Auto Steal From Players",
 				Content = "Chases anyone carrying an egg in the field, bats them until the egg drops, grabs it and banks it. A carrier is only chased when the egg clears the filters below.",
 				Default = false,
 				Callback = v4732(v4734)
@@ -30899,7 +30795,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				Callback = v4732(v4735)
 			})
 			t216.stealPlayerValue = v4870:AddInput({
-				Title = "Minimum Carrier Egg Income",
+				Title = "Minimum Value",
 				Content = "Skip carriers holding less than this per second. Supports k, m and b.",
 				Placeholder = "e.g. 500k, 2m, 1b",
 				Default = "",
@@ -30913,13 +30809,13 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 
 			if v4871.AddActionList then
 				v4873 = v4871:AddActionList({
-					Title = "Players in This Server",
+					Title = "Players in this server",
 					EmptyText = "Nobody else is in this server.",
 					VisibleRows = 6,
 					ButtonWidth = 76
 				})
 				v4874 = v4872:AddActionList({
-					Title = "Egg Carrier History",
+					Title = "History of stolen eggs from players",
 					EmptyText = "No player steals yet.",
 					VisibleRows = 5,
 					ButtonWidth = 72
@@ -30927,12 +30823,12 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			else
 				v4871:AddParagraph({
 					Title = "Update required",
-					Content = "This Sena UI build has no player list yet. Rejoin to pull the latest version."
+					Content = "The player list is unavailable in this build. Rejoin to refresh the session data."
 				})
 			end
 
 			v4872:AddButton({
-				Title = "Clear Carrier History",
+				Title = "Clear History",
 				Content = "Wipe the list above.",
 				Callback = v4732(function()
 					if __SenaV4PlayerSteal then
@@ -30987,7 +30883,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 						end)
 
 						if not ok then
-							warn("[Sena Steal] Player list update loop error:", result)
+							warn("[Velox Hub] Player list update loop error:", result)
 						end
 
 						task.wait(1)
@@ -30996,9 +30892,28 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			end
 		end
 
+		v4742:AddTab({
+			Name = "Live Chat",
+			Icon = "chat"
+		}):AddSection("Global Chat", true):AddLiveChat({
+			Title = "Live Chat",
+			Height = 300
+		})
+
+		if type(v4742.AddForum) == "function" then
+			v4742:AddForum({
+				Name = "Forum",
+				Icon = "forum",
+				Section = "Config Forum"
+			})
+		end
+
 		do
 			local __SenaV4Visual = genv.__SenaV4Visual
-			local v4885 = t216.miscTab
+			local v4885 = v4742:AddTab({
+				Name = "Visual",
+				Icon = "eye"
+			})
 			local t225 = {
 				rods = nil,
 				fish = nil
@@ -31008,7 +30923,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local function v4888()
 				if v4887 and __SenaV4Visual then
 					pcall(function()
-						v4887:SetContent(__SenaV4Visual.status)
+						v4887:SetDesc(__SenaV4Visual.status)
 					end)
 				end
 			end
@@ -31020,7 +30935,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				task.spawn(function()
 					__SenaV4Visual.spawn(p1096, t225[p1096])
 					v4888()
-					SenaLibOverride:Notify({
+					VeloxUI:Notify({
 						Title = "Visual",
 						Content = __SenaV4Visual.status,
 						Duration = 3
@@ -31034,8 +30949,8 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			v4890:AddSubSection("Rods")
 
 			local v4891 = v4890:AddDropdown({
-				Title = "Choose Rod",
-				Content = "Choose a rod model from the available Fish It list. The list loads when available.",
+				Title = "Select Rod",
+				Content = "Rods and skins from Fish It. Loading list...",
 				Options = {},
 				Multi = false,
 				Default = nil,
@@ -31045,15 +30960,15 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			})
 
 			v4890:AddButton({
-				Title = "Show Rod Model",
-				Content = "Adds a local rod model to your inventory. Equip it like a bat; only you can see the model.",
+				Title = "Spawn Rod",
+				Content = "Downloads the rod and puts it in your backpack. Equip it like a bat. Only you can see it.",
 				Callback = v4732(function()
 					v4889("rods")
 				end)
 			})
 			v4890:AddSlider({
 				Title = "Rod Size",
-				Content = "1.0 matches the model’s normal size. Changes update existing spawned rods.",
+				Content = "1 = the size it has in Fish It. Spawned rods update right away.",
 				Min = 0.5,
 				Max = 2,
 				Default = 1,
@@ -31070,8 +30985,8 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			v4890:AddSubSection("Fish")
 
 			local v4892 = v4890:AddDropdown({
-				Title = "Choose Fish",
-				Content = "Choose a fish model from the available Fish It list. The list loads when available.",
+				Title = "Select Fish",
+				Content = "Secret and Forgotten fish from Fish It. Loading list...",
 				Options = {},
 				Multi = false,
 				Default = nil,
@@ -31081,15 +30996,15 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			})
 
 			v4890:AddButton({
-				Title = "Show Fish Model",
-				Content = "Adds a local fish model under Pets in your inventory. Only you can see the model.",
+				Title = "Spawn Fish",
+				Content = "Downloads the fish and puts it in your backpack under Pets. Only you can see it.",
 				Callback = v4732(function()
 					v4889("fish")
 				end)
 			})
 			v4890:AddSlider({
-				Title = "Fish Weight Range",
-				Content = "0% uses the lightest weight and 100% uses the heaviest setting. The model size follows its weight setting.",
+				Title = "Fish Weight",
+				Content = "0% = lightest catch, 100% = heaviest Big catch. Size follows Fish It: weight / min weight.",
 				Min = 0,
 				Max = 100,
 				Default = 0,
@@ -31146,8 +31061,8 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local u4900 = Egg[1]
 
 			v4896:AddDropdown({
-				Title = "Visual Item Type",
-				Content = "Choose whether to create a local egg or pet model. These visuals are only shown to you.",
+				Title = "Type",
+				Content = "Egg shows in the Eggs tab, Pet under Pets. Both are fake and local-only.",
 				Options = {
 					"Egg",
 					"Pet"
@@ -31159,7 +31074,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			v4896:AddDropdown({
-				Title = "Choose Egg or Pet",
+				Title = "Select Egg / Pet",
 				Content = "Which egg or pet to spawn.",
 				Options = Egg,
 				Multi = false,
@@ -31170,7 +31085,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			v4896:AddSlider({
-				Title = "Size and Weight Multiplier",
+				Title = "Size / Flex",
 				Content = "Bigger = heavier Kg & higher value (Kg = base weight x scale^3) AND a bigger egg in your hand. 50 hits the billions.",
 				Min = 1,
 				Max = 100,
@@ -31181,8 +31096,8 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			v4896:AddButton({
-				Title = "Spawn Model in Hand",
-				Content = "Creates the selected model in your hand. Press again to create another. This does not add it to your inventory list.",
+				Title = "Hold in Hand",
+				Content = "Spawns a model of it in your hand. Press again for more. (In-hand only - use the other button to also add it to All Items.)",
 				Callback = v4732(function()
 					local __SenaV4VisualSAE = genv.__SenaV4VisualSAE
 
@@ -31192,8 +31107,8 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			v4896:AddButton({
-				Title = "Add to Inventory with Weight",
-				Content = "Adds a local model to the Eggs or Pets list with the selected weight value. Press again to add another.",
+				Title = "Add to Backpack (Kg)",
+				Content = "Drops it in All Items (eggs) or Pets with a huge Kg for the inventory flex. Press again for more.",
 				Callback = v4732(function()
 					local __SenaV4VisualSAE = genv.__SenaV4VisualSAE
 
@@ -31203,7 +31118,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			v4896:AddButton({
-				Title = "Remove Spawned Egg and Pet Models",
+				Title = "Remove Egg / Pet Visuals",
 				Content = "Takes every spawned fake egg/pet and held model out.",
 				Callback = v4732(function()
 					local __SenaV4VisualSAE = genv.__SenaV4VisualSAE
@@ -31214,6 +31129,11 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 		end
+
+		v4742:AddTab({
+			Name = "Donate",
+			Icon = "donator"
+		}):AddSection("Support", true):AddSupportCard({})
 
 		do
 			local function v4904(p1104, p1105)
