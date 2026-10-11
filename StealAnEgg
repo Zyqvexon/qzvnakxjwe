@@ -9784,7 +9784,7 @@ do
 
 						if lastCarryReject ~= p412._lastCarryRejectLogged then
 							p412._lastCarryRejectLogged = lastCarryReject
-							warn("[Velox Hub] carry refused: " .. lastCarryReject)
+							warn("[Steal an Egg] carry refused: " .. lastCarryReject)
 						end
 					end
 
@@ -10703,7 +10703,7 @@ do
 			end
 
 			if not ok then
-				warn("[Velox Hub] admin steal error: " .. tostring(result))
+				warn("[Steal an Egg] admin steal error: " .. tostring(result))
 
 				if not p444.destroyed and p444.enabled then
 					p444:_finish("Steal error — retrying")
@@ -17300,7 +17300,7 @@ local t103 = {
 local function v2528()
 	local sourceUrl = tostring(genv.__VeloxHubAutoExecuteUrl or senaV4Config.AutoExecuteURL or "")
 	if not sourceUrl:match("^https://") then
-		warn("[Velox Hub] Auto Execute needs the raw HTTPS URL of the hosted migrated Velox Hub script. Set it in Player settings first.")
+		warn("[Steal an Egg] Auto Execute needs the raw HTTPS URL of the hosted migrated Steal an Egg script. Set it in Player settings first.")
 		return false
 	end
 
@@ -17323,7 +17323,7 @@ loadstring(game:HttpGet(%q))()
 	if type(queue_on_teleport_) == "function" then
 		local ok, err = pcall(queue_on_teleport_, bootstrap)
 		if not ok then
-			warn("[Velox Hub] Could not queue Auto Execute: " .. tostring(err))
+			warn("[Steal an Egg] Could not queue Auto Execute: " .. tostring(err))
 			return false
 		end
 		return true
@@ -17333,7 +17333,7 @@ loadstring(game:HttpGet(%q))()
 		return true
 	end
 
-	warn("[Velox Hub] This executor does not expose a supported Auto Execute method.")
+	warn("[Steal an Egg] This executor does not expose a supported Auto Execute method.")
 	return false
 end
 local function v2530()
@@ -21889,7 +21889,7 @@ do
 						TextLabel.Position = UDim2.new(0.34, 0, 0.017, 0)
 						TextLabel.Size = UDim2.new(0.3, 0, 0.09, 0)
 						TextLabel.Font = Enum.Font.GothamBlack
-						TextLabel.Text = "Velox Hub · Egg Value/s"
+						TextLabel.Text = "Egg Value/s"
 						TextLabel.TextScaled = true
 						TextLabel.TextXAlignment = Enum.TextXAlignment.Left
 						TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -23392,6 +23392,12 @@ do
 
 		local u3772
 		local TextLabel
+		local logTrackedValue
+		local logRepeatedValue
+		local logSearchBox
+		local logSearchText = ""
+		local logFilter = "All"
+		local logFilterButtons = {}
 		local s12 = "rarity"
 		local t177 = {}
 		local logRows = {}
@@ -23400,30 +23406,34 @@ do
 		local function v3776()
 			v3698()
 
-			for k, v in pairs(t177) do
-				local v3779 = k == s12
-
-				v.BackgroundColor3 = v3779 and v3697.accent or Color3.fromRGB(255, 255, 255)
-				v.BackgroundTransparency = v3779 and 0.15 or 0.88
-				v.TextColor3 = v3779 and Color3.fromRGB(255, 255, 255) or v3697.btnText
-
-				local UIStroke = v:FindFirstChildOfClass("UIStroke")
-
-				if UIStroke then
-					UIStroke.Transparency = v3779 and 0 or 1
+			for key, button in pairs(t177) do
+				local selected = key == s12
+				button.BackgroundColor3 = selected and Color3.fromRGB(87, 104, 255) or Color3.fromRGB(22, 30, 49)
+				button.BackgroundTransparency = selected and 0 or 0.08
+				button.TextColor3 = selected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(160, 174, 205)
+				local stroke = button:FindFirstChildOfClass("UIStroke")
+				if stroke then
+					stroke.Color = selected and Color3.fromRGB(133, 145, 255) or Color3.fromRGB(49, 62, 92)
+					stroke.Transparency = selected and 0.12 or 0.5
 				end
 			end
 		end
 
 		v3766 = function()
 			v3698()
-			if not u3772 then return end
+			if not u3772 then
+				return
+			end
 
 			local entries = {}
 			local totalSightings = 0
+			local repeatedTypes = 0
 			for _, entry in pairs(t174) do
 				entries[#entries + 1] = entry
 				totalSightings += tonumber(entry.count) or 0
+				if (tonumber(entry.count) or 0) > 1 then
+					repeatedTypes += 1
+				end
 			end
 
 			if s12 == "count" then
@@ -23432,7 +23442,9 @@ do
 					return (a.count or 0) > (b.count or 0)
 				end)
 			elseif s12 == "name" then
-				table.sort(entries, function(a, b) return tostring(a.name) < tostring(b.name) end)
+				table.sort(entries, function(a, b)
+					return tostring(a.name or "") < tostring(b.name or "")
+				end)
 			else
 				table.sort(entries, function(a, b)
 					if a.rnum == b.rnum then return (a.count or 0) > (b.count or 0) end
@@ -23440,90 +23452,140 @@ do
 				end)
 			end
 
+			if logTrackedValue then logTrackedValue.Text = tostring(#entries) end
+			if TextLabel then TextLabel.Text = tostring(totalSightings) end
+			if logRepeatedValue then logRepeatedValue.Text = tostring(repeatedTypes) end
+
 			local active = {}
-			for index, entry in ipairs(entries) do
+			local visibleEntries = {}
+			local now = os.clock()
+			local query = string.lower(tostring(logSearchText or ""))
+			for _, entry in ipairs(entries) do
+				local name = tostring(entry.name or "Unknown")
+				local rarity = tostring(entry.rarity or "Unknown")
+				local age = math.max(0, now - (tonumber(entry.last) or now))
+				local matches = true
+				if query ~= "" and not string.find(string.lower(name .. " " .. rarity), query, 1, true) then
+					matches = false
+				end
+				if logFilter == "Recent" and age > 30 then
+					matches = false
+				elseif logFilter == "Frequent" and (tonumber(entry.count) or 0) < 2 then
+					matches = false
+				end
+				if matches then
+					visibleEntries[#visibleEntries + 1] = entry
+				end
+			end
+
+			for index, entry in ipairs(visibleEntries) do
 				local key = tostring(entry.name or "Unknown")
 				active[key] = true
+				local accent = entry.color or Color3.fromRGB(105, 119, 255)
 				local row = logRows[key]
-				local accent = entry.color or v3697.accent
 				if not row or not row.frame or not row.frame.Parent then
 					local frame = Instance.new("Frame")
-					frame.Name = "EggLog_" .. tostring(index)
-					frame.Size = UDim2.new(1, -4, 0, 48)
-					frame.BackgroundColor3 = Color3.fromRGB(20, 27, 45)
-					frame.BackgroundTransparency = 0.08
+					frame.Name = "Activity_" .. tostring(index)
+					frame.Size = UDim2.new(1, -3, 0, 60)
+					frame.BackgroundColor3 = Color3.fromRGB(15, 22, 39)
+					frame.BackgroundTransparency = 0
 					frame.BorderSizePixel = 0
 					frame.Parent = u3772
-					Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+					Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 9)
 
 					local stroke = Instance.new("UIStroke")
-					stroke.Color = Color3.fromRGB(55, 68, 101)
+					stroke.Color = Color3.fromRGB(40, 53, 82)
 					stroke.Thickness = 1
-					stroke.Transparency = 0.55
+					stroke.Transparency = 0.35
 					stroke.Parent = frame
 
 					local accentBar = Instance.new("Frame")
-					accentBar.Position = UDim2.fromOffset(0, 7)
-					accentBar.Size = UDim2.new(0, 3, 1, -14)
+					accentBar.Size = UDim2.new(0, 3, 1, -18)
+					accentBar.Position = UDim2.fromOffset(0, 9)
 					accentBar.BackgroundColor3 = accent
 					accentBar.BorderSizePixel = 0
 					accentBar.Parent = frame
 					Instance.new("UICorner", accentBar).CornerRadius = UDim.new(1, 0)
 
+					local iconTile = Instance.new("Frame")
+					iconTile.Position = UDim2.fromOffset(11, 10)
+					iconTile.Size = UDim2.fromOffset(38, 38)
+					iconTile.BackgroundColor3 = Color3.fromRGB(25, 34, 57)
+					iconTile.BorderSizePixel = 0
+					iconTile.Parent = frame
+					Instance.new("UICorner", iconTile).CornerRadius = UDim.new(0, 8)
+
 					local icon = Instance.new("ImageLabel")
 					icon.BackgroundTransparency = 1
-					icon.Position = UDim2.fromOffset(10, 9)
-					icon.Size = UDim2.fromOffset(28, 28)
+					icon.AnchorPoint = Vector2.new(0.5, 0.5)
+					icon.Position = UDim2.fromScale(0.5, 0.5)
+					icon.Size = UDim2.fromOffset(30, 30)
 					icon.ScaleType = Enum.ScaleType.Fit
-					icon.Image = entry.image or ""
-					icon.Parent = frame
+					icon.Parent = iconTile
 
 					local nameLabel = Instance.new("TextLabel")
 					nameLabel.BackgroundTransparency = 1
-					nameLabel.Position = UDim2.fromOffset(46, 6)
-					nameLabel.Size = UDim2.new(1, -154, 0, 18)
+					nameLabel.Position = UDim2.fromOffset(59, 8)
+					nameLabel.Size = UDim2.new(1, -148, 0, 20)
 					nameLabel.Font = Enum.Font.GothamBold
 					nameLabel.TextSize = 12
 					nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 					nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
-					nameLabel.TextColor3 = Color3.fromRGB(241, 245, 255)
+					nameLabel.TextColor3 = Color3.fromRGB(240, 244, 255)
 					nameLabel.Parent = frame
 
 					local detailLabel = Instance.new("TextLabel")
 					detailLabel.BackgroundTransparency = 1
-					detailLabel.Position = UDim2.fromOffset(46, 25)
-					detailLabel.Size = UDim2.new(1, -154, 0, 15)
+					detailLabel.Position = UDim2.fromOffset(59, 31)
+					detailLabel.Size = UDim2.new(1, -150, 0, 16)
 					detailLabel.Font = Enum.Font.GothamMedium
 					detailLabel.TextSize = 10
 					detailLabel.TextXAlignment = Enum.TextXAlignment.Left
 					detailLabel.TextTruncate = Enum.TextTruncate.AtEnd
-					detailLabel.TextColor3 = Color3.fromRGB(164, 177, 207)
+					detailLabel.TextColor3 = Color3.fromRGB(149, 165, 198)
 					detailLabel.Parent = frame
 
-					local countLabel = Instance.new("TextLabel")
-					countLabel.AnchorPoint = Vector2.new(1, 0.5)
-					countLabel.Position = UDim2.new(1, -10, 0.5, -3)
-					countLabel.Size = UDim2.fromOffset(88, 20)
-					countLabel.BackgroundColor3 = Color3.fromRGB(49, 61, 102)
-					countLabel.BackgroundTransparency = 0.15
-					countLabel.Font = Enum.Font.GothamBold
-					countLabel.TextSize = 12
-					countLabel.TextColor3 = Color3.fromRGB(221, 228, 255)
-					countLabel.Parent = frame
-					Instance.new("UICorner", countLabel).CornerRadius = UDim.new(0, 5)
+					local rarityBadge = Instance.new("TextLabel")
+					rarityBadge.AnchorPoint = Vector2.new(1, 0)
+					rarityBadge.Position = UDim2.new(1, -10, 0, 8)
+					rarityBadge.Size = UDim2.fromOffset(74, 20)
+					rarityBadge.BackgroundColor3 = accent
+					rarityBadge.BackgroundTransparency = 0.82
+					rarityBadge.BorderSizePixel = 0
+					rarityBadge.Font = Enum.Font.GothamBold
+					rarityBadge.TextSize = 9
+					rarityBadge.TextTruncate = Enum.TextTruncate.AtEnd
+					rarityBadge.TextColor3 = accent
+					rarityBadge.Parent = frame
+					Instance.new("UICorner", rarityBadge).CornerRadius = UDim.new(1, 0)
 
-					row = {frame = frame, accent = accentBar, icon = icon, name = nameLabel, detail = detailLabel, count = countLabel, stroke = stroke}
+					local countLabel = Instance.new("TextLabel")
+					countLabel.AnchorPoint = Vector2.new(1, 1)
+					countLabel.Position = UDim2.new(1, -10, 1, -7)
+					countLabel.Size = UDim2.fromOffset(74, 17)
+					countLabel.BackgroundTransparency = 1
+					countLabel.Font = Enum.Font.GothamBold
+					countLabel.TextSize = 10
+					countLabel.TextXAlignment = Enum.TextXAlignment.Right
+					countLabel.TextColor3 = Color3.fromRGB(198, 210, 240)
+					countLabel.Parent = frame
+
+					row = {frame = frame, accent = accentBar, icon = icon, name = nameLabel, detail = detailLabel, count = countLabel, rarity = rarityBadge, stroke = stroke}
 					logRows[key] = row
 				end
 
+				local age = math.max(0, math.floor(now - (tonumber(entry.last) or now)))
+				row.frame.Visible = true
 				row.frame.LayoutOrder = index
 				row.accent.BackgroundColor3 = accent
 				row.icon.Image = entry.image or ""
 				row.name.Text = tostring(entry.name or "Unknown")
-				row.detail.TextColor3 = accent
-				local age = math.max(0, math.floor(os.clock() - (tonumber(entry.last) or os.clock())))
-				row.detail.Text = string.format("%s  •  Last detected %ds ago", tostring(entry.rarity or "Unknown"), age)
+				row.detail.Text = string.format("LAST SEEN  %ds AGO", age)
 				row.count.Text = string.format("%s sightings", tostring(entry.count or 0))
+				row.rarity.Text = tostring(entry.rarity or "Unknown")
+				row.rarity.TextColor3 = accent
+				row.rarity.BackgroundColor3 = accent
+				row.stroke.Color = Color3.fromRGB(40, 53, 82)
 			end
 
 			for key, row in pairs(logRows) do
@@ -23533,155 +23595,250 @@ do
 				end
 			end
 
-			u3772.CanvasSize = UDim2.new(0, 0, 0, #entries * 54 + 4)
-			if TextLabel then TextLabel.Text = string.format("%d sightings", totalSightings) end
-			if logEmptyState then logEmptyState.Visible = #entries == 0 end
+			u3772.CanvasSize = UDim2.new(0, 0, 0, #visibleEntries * 67 + 4)
+			if logEmptyState then
+				logEmptyState.Visible = #visibleEntries == 0
+				if #entries == 0 then
+					logEmptyState.Text = "No activity yet\nEgg types appear here when they are detected."
+				else
+					logEmptyState.Text = "No results for this view\nTry another filter or search term."
+				end
+			end
 		end
 
 		local function v3797(p890)
 			p890.BackgroundTransparency = 1
 
-			local title = Instance.new("TextLabel")
-			title.BackgroundTransparency = 1
-			title.Position = UDim2.fromOffset(14, 2)
-			title.Size = UDim2.new(1, -150, 0, 22)
-			title.Font = Enum.Font.GothamBold
-			title.TextSize = 16
-			title.TextXAlignment = Enum.TextXAlignment.Left
-			title.TextColor3 = Color3.fromRGB(241, 245, 255)
-			title.Text = "Egg Logs"
-			title.Parent = p890
+			local function makeLabel(parent, name, position, size, text, textSize, color, font, xAlign)
+				local label = Instance.new("TextLabel")
+				label.Name = name
+				label.BackgroundTransparency = 1
+				label.Position = position
+				label.Size = size
+				label.Font = font or Enum.Font.GothamMedium
+				label.TextSize = textSize
+				label.TextColor3 = color
+				label.TextXAlignment = xAlign or Enum.TextXAlignment.Left
+				label.Text = text
+				label.Parent = parent
+				return label
+			end
 
-			local subtitle = Instance.new("TextLabel")
-			subtitle.BackgroundTransparency = 1
-			subtitle.Position = UDim2.fromOffset(14, 24)
-			subtitle.Size = UDim2.new(1, -28, 0, 16)
-			subtitle.Font = Enum.Font.GothamMedium
-			subtitle.TextSize = 10
-			subtitle.TextXAlignment = Enum.TextXAlignment.Left
-			subtitle.TextColor3 = Color3.fromRGB(151, 166, 198)
-			subtitle.Text = "Live field sightings · session summary"
-			subtitle.Parent = p890
+			makeLabel(p890, "Eyebrow", UDim2.fromOffset(14, 0), UDim2.new(1, -28, 0, 13), "SESSION MONITOR  /  FIELD ACTIVITY", 9, Color3.fromRGB(130, 145, 190), Enum.Font.GothamBold)
+			makeLabel(p890, "PanelHeading", UDim2.fromOffset(14, 15), UDim2.new(1, -28, 0, 25), "Egg Activity", 19, Color3.fromRGB(242, 245, 255), Enum.Font.GothamBold)
+			makeLabel(p890, "PanelSubtitle", UDim2.fromOffset(14, 41), UDim2.new(1, -28, 0, 15), "Sightings grouped by egg type · session only", 10, Color3.fromRGB(148, 163, 196), Enum.Font.GothamMedium)
 
-			TextLabel = Instance.new("TextLabel")
-			TextLabel.BackgroundColor3 = Color3.fromRGB(38, 48, 79)
-			TextLabel.BackgroundTransparency = 0.08
-			TextLabel.Position = UDim2.new(1, -126, 0, 5)
-			TextLabel.Size = UDim2.fromOffset(112, 24)
-			TextLabel.Font = Enum.Font.GothamBold
-			TextLabel.TextSize = 10
-			TextLabel.TextXAlignment = Enum.TextXAlignment.Center
-			TextLabel.TextColor3 = Color3.fromRGB(212, 222, 255)
-			TextLabel.Text = "0 sightings"
-			TextLabel.Parent = p890
-			Instance.new("UICorner", TextLabel).CornerRadius = UDim.new(0, 6)
+			local stats = Instance.new("Frame")
+			stats.Name = "ActivitySummary"
+			stats.Position = UDim2.fromOffset(14, 63)
+			stats.Size = UDim2.new(1, -28, 0, 48)
+			stats.BackgroundTransparency = 1
+			stats.Parent = p890
 
-			local toolbar = Instance.new("Frame")
-			toolbar.Position = UDim2.fromOffset(14, 47)
-			toolbar.Size = UDim2.new(1, -28, 0, 28)
-			toolbar.BackgroundTransparency = 1
-			toolbar.Parent = p890
-			local toolbarLayout = Instance.new("UIListLayout")
-			toolbarLayout.FillDirection = Enum.FillDirection.Horizontal
-			toolbarLayout.SortOrder = Enum.SortOrder.LayoutOrder
-			toolbarLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-			toolbarLayout.Padding = UDim.new(0, 6)
-			toolbarLayout.Parent = toolbar
+			local function statCard(name, x, titleText, initialValue, valueColor)
+				local card = Instance.new("Frame")
+				card.Name = name
+				card.Position = UDim2.new(x, 0, 0, 0)
+				card.Size = UDim2.new(1 / 3, -5, 1, 0)
+				card.BackgroundColor3 = Color3.fromRGB(17, 25, 44)
+				card.BorderSizePixel = 0
+				card.Parent = stats
+				Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
+				local edge = Instance.new("UIStroke", card)
+				edge.Color = Color3.fromRGB(42, 56, 91)
+				edge.Transparency = 0.42
+				edge.Thickness = 1
+				makeLabel(card, "Label", UDim2.fromOffset(9, 6), UDim2.new(1, -16, 0, 11), titleText, 8, Color3.fromRGB(131, 148, 185), Enum.Font.GothamBold)
+				return makeLabel(card, "Value", UDim2.fromOffset(9, 18), UDim2.new(1, -16, 0, 22), initialValue, 17, valueColor, Enum.Font.GothamBold)
+			end
 
-			local function makeSortButton(label, sortKey, width)
+			logTrackedValue = statCard("UniqueTypes", 0, "EGG TYPES", "0", Color3.fromRGB(233, 239, 255))
+			TextLabel = statCard("TotalSightings", 1 / 3, "TOTAL SIGHTINGS", "0", Color3.fromRGB(132, 154, 255))
+			logRepeatedValue = statCard("RepeatedTypes", 2 / 3, "SEEN MORE THAN ONCE", "0", Color3.fromRGB(83, 218, 180))
+
+			local searchFrame = Instance.new("Frame")
+			searchFrame.Name = "SearchFrame"
+			searchFrame.Position = UDim2.fromOffset(14, 120)
+			searchFrame.Size = UDim2.new(1, -28, 0, 32)
+			searchFrame.BackgroundColor3 = Color3.fromRGB(13, 20, 36)
+			searchFrame.BorderSizePixel = 0
+			searchFrame.Parent = p890
+			Instance.new("UICorner", searchFrame).CornerRadius = UDim.new(0, 8)
+			local searchStroke = Instance.new("UIStroke", searchFrame)
+			searchStroke.Color = Color3.fromRGB(43, 58, 92)
+			searchStroke.Transparency = 0.2
+			local searchHint = makeLabel(searchFrame, "SearchMark", UDim2.fromOffset(10, 0), UDim2.fromOffset(20, 32), "⌕", 17, Color3.fromRGB(129, 147, 195), Enum.Font.GothamBold, Enum.TextXAlignment.Center)
+			searchHint.TextYAlignment = Enum.TextYAlignment.Center
+
+			logSearchBox = Instance.new("TextBox")
+			logSearchBox.Name = "SearchEggTypes"
+			logSearchBox.Position = UDim2.fromOffset(34, 0)
+			logSearchBox.Size = UDim2.new(1, -44, 1, 0)
+			logSearchBox.BackgroundTransparency = 1
+			logSearchBox.ClearTextOnFocus = false
+			logSearchBox.Font = Enum.Font.GothamMedium
+			logSearchBox.TextSize = 11
+			logSearchBox.TextXAlignment = Enum.TextXAlignment.Left
+			logSearchBox.TextColor3 = Color3.fromRGB(229, 235, 252)
+			logSearchBox.PlaceholderColor3 = Color3.fromRGB(105, 122, 158)
+			logSearchBox.PlaceholderText = "Search egg type or rarity..."
+			logSearchBox.Text = logSearchText
+			logSearchBox.Parent = searchFrame
+			logSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+				logSearchText = string.lower(logSearchBox.Text or "")
+				v3766()
+			end)
+
+			local filters = Instance.new("Frame")
+			filters.Name = "ActivityFilters"
+			filters.Position = UDim2.fromOffset(14, 159)
+			filters.Size = UDim2.new(1, -28, 0, 26)
+			filters.BackgroundTransparency = 1
+			filters.Parent = p890
+			local filterLayout = Instance.new("UIListLayout", filters)
+			filterLayout.FillDirection = Enum.FillDirection.Horizontal
+			filterLayout.SortOrder = Enum.SortOrder.LayoutOrder
+			filterLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+			filterLayout.Padding = UDim.new(0, 6)
+			logFilterButtons = {}
+
+			local function styleFilter(key)
+				for filterName, button in pairs(logFilterButtons) do
+					local selected = filterName == key
+					button.BackgroundColor3 = selected and Color3.fromRGB(78, 96, 240) or Color3.fromRGB(20, 29, 49)
+					button.BackgroundTransparency = selected and 0 or 0.05
+					button.TextColor3 = selected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(159, 174, 206)
+					local stroke = button:FindFirstChildOfClass("UIStroke")
+					if stroke then stroke.Transparency = selected and 0.1 or 0.55 end
+				end
+			end
+
+			local function addFilter(labelText, key, width)
 				local button = Instance.new("TextButton")
-				button.Name = "Sort_" .. sortKey
+				button.Name = "Filter_" .. key
+				button.LayoutOrder = key == "All" and 1 or key == "Recent" and 2 or 3
 				button.Size = UDim2.fromOffset(width, 26)
-				button.BackgroundColor3 = Color3.fromRGB(38, 48, 79)
-				button.BackgroundTransparency = 0.15
+				button.BackgroundColor3 = Color3.fromRGB(20, 29, 49)
+				button.BorderSizePixel = 0
 				button.AutoButtonColor = true
 				button.Font = Enum.Font.GothamBold
 				button.TextSize = 10
-				button.TextColor3 = Color3.fromRGB(180, 191, 220)
-				button.Text = label
-				button.Parent = toolbar
-				Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
-				local stroke = Instance.new("UIStroke")
-				stroke.Color = Color3.fromRGB(83, 98, 148)
+				button.Text = labelText
+				button.Parent = filters
+				Instance.new("UICorner", button).CornerRadius = UDim.new(0, 7)
+				local stroke = Instance.new("UIStroke", button)
+				stroke.Color = Color3.fromRGB(55, 70, 111)
 				stroke.Transparency = 0.55
-				stroke.Parent = button
+				logFilterButtons[key] = button
+				button.MouseButton1Click:Connect(function()
+					logFilter = key
+					styleFilter(key)
+					v3766()
+				end)
+			end
+			addFilter("All", "All", 46)
+			addFilter("Recent · 30s", "Recent", 77)
+			addFilter("Repeated", "Frequent", 76)
+
+			local clearButton = Instance.new("TextButton")
+			clearButton.Name = "ClearActivity"
+			clearButton.LayoutOrder = 4
+			clearButton.Size = UDim2.fromOffset(64, 26)
+			clearButton.BackgroundColor3 = Color3.fromRGB(63, 34, 53)
+			clearButton.BorderSizePixel = 0
+			clearButton.AutoButtonColor = true
+			clearButton.Font = Enum.Font.GothamBold
+			clearButton.TextSize = 10
+			clearButton.TextColor3 = Color3.fromRGB(255, 190, 213)
+			clearButton.Text = "Clear"
+			clearButton.Parent = filters
+			Instance.new("UICorner", clearButton).CornerRadius = UDim.new(0, 7)
+			clearButton.MouseButton1Click:Connect(function()
+				t174 = {}
+				v3766()
+			end)
+			styleFilter(logFilter)
+
+			local sortBar = Instance.new("Frame")
+			sortBar.Name = "SortBar"
+			sortBar.Position = UDim2.fromOffset(14, 192)
+			sortBar.Size = UDim2.new(1, -28, 0, 22)
+			sortBar.BackgroundTransparency = 1
+			sortBar.Parent = p890
+			makeLabel(sortBar, "SortLabel", UDim2.fromOffset(0, 0), UDim2.fromOffset(40, 22), "SORT", 9, Color3.fromRGB(113, 131, 171), Enum.Font.GothamBold)
+			local sortLayout = Instance.new("UIListLayout", sortBar)
+			sortLayout.FillDirection = Enum.FillDirection.Horizontal
+			sortLayout.SortOrder = Enum.SortOrder.LayoutOrder
+			sortLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+			sortLayout.Padding = UDim.new(0, 6)
+
+			local spacer = Instance.new("Frame")
+			spacer.Name = "SortSpacer"
+			spacer.Size = UDim2.fromOffset(40, 1)
+			spacer.BackgroundTransparency = 1
+			spacer.LayoutOrder = 1
+			spacer.Parent = sortBar
+
+			local function makeSortButton(labelText, sortKey, width, order)
+				local button = Instance.new("TextButton")
+				button.Name = "Sort_" .. sortKey
+				button.Size = UDim2.fromOffset(width, 22)
+				button.LayoutOrder = order
+				button.BackgroundColor3 = Color3.fromRGB(22, 30, 49)
+				button.BorderSizePixel = 0
+				button.AutoButtonColor = true
+				button.Font = Enum.Font.GothamBold
+				button.TextSize = 9
+				button.TextColor3 = Color3.fromRGB(160, 174, 205)
+				button.Text = labelText
+				button.Parent = sortBar
+				Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
+				local stroke = Instance.new("UIStroke", button)
+				stroke.Color = Color3.fromRGB(49, 62, 92)
+				stroke.Transparency = 0.5
+				t177[sortKey] = button
 				button.MouseButton1Click:Connect(function()
 					s12 = sortKey
 					v3776()
 					v3766()
 				end)
-				t177[sortKey] = button
 			end
-			makeSortButton("Rarity", "rarity", 58)
-			makeSortButton("Sightings", "count", 72)
-			makeSortButton("Name", "name", 54)
+			t177 = {}
+			makeSortButton("Rarity", "rarity", 55, 2)
+			makeSortButton("Sightings", "count", 68, 3)
+			makeSortButton("Name", "name", 52, 4)
+			v3776()
 
-			local clearButton = Instance.new("TextButton")
-			clearButton.Name = "ClearLogs"
-			clearButton.Size = UDim2.fromOffset(58, 26)
-			clearButton.BackgroundColor3 = Color3.fromRGB(84, 48, 75)
-			clearButton.BackgroundTransparency = 0.08
-			clearButton.AutoButtonColor = true
-			clearButton.Font = Enum.Font.GothamBold
-			clearButton.TextSize = 10
-			clearButton.TextColor3 = Color3.fromRGB(255, 224, 235)
-			clearButton.Text = "Clear"
-			clearButton.Parent = toolbar
-			Instance.new("UICorner", clearButton).CornerRadius = UDim.new(0, 6)
-			clearButton.MouseButton1Click:Connect(function()
-				t174 = {}
-				v3766()
-			end)
-
-			local columns = Instance.new("Frame")
-			columns.Position = UDim2.fromOffset(18, 82)
-			columns.Size = UDim2.new(1, -36, 0, 16)
-			columns.BackgroundTransparency = 1
-			columns.Parent = p890
-			local function column(text, x, width, align)
-				local label = Instance.new("TextLabel")
-				label.BackgroundTransparency = 1
-				label.Position = UDim2.new(x, 0, 0, 0)
-				label.Size = UDim2.new(width, 0, 1, 0)
-				label.Font = Enum.Font.GothamBold
-				label.TextSize = 9
-				label.TextColor3 = Color3.fromRGB(118, 135, 174)
-				label.TextXAlignment = align or Enum.TextXAlignment.Left
-				label.Text = text
-				label.Parent = columns
-			end
-			column("EGG", 0, 0.55)
-			column("RARITY / LAST SEEN", 0.55, 0.31)
-			column("SIGHTINGS", 0.78, 0.22, Enum.TextXAlignment.Right)
+			makeLabel(p890, "ListLabel", UDim2.fromOffset(14, 217), UDim2.new(1, -28, 0, 14), "DETECTED TYPES", 9, Color3.fromRGB(112, 130, 172), Enum.Font.GothamBold)
 
 			local ScrollingFrame = Instance.new("ScrollingFrame")
-			ScrollingFrame.Name = "EggLogList"
-			ScrollingFrame.Position = UDim2.fromOffset(14, 102)
-			ScrollingFrame.Size = UDim2.new(1, -28, 1, -106)
+			ScrollingFrame.Name = "ActivityFeed"
+			ScrollingFrame.Position = UDim2.fromOffset(14, 235)
+			ScrollingFrame.Size = UDim2.new(1, -28, 1, -239)
 			ScrollingFrame.BackgroundTransparency = 1
 			ScrollingFrame.BorderSizePixel = 0
-			ScrollingFrame.ScrollBarThickness = 4
-			ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(103, 119, 185)
+			ScrollingFrame.ScrollBarThickness = 3
+			ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(99, 116, 255)
 			ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 			ScrollingFrame.ScrollingDirection = Enum.ScrollingDirection.Y
 			ScrollingFrame.Parent = p890
 			local listLayout = Instance.new("UIListLayout")
-			listLayout.Padding = UDim.new(0, 6)
+			listLayout.Padding = UDim.new(0, 7)
 			listLayout.SortOrder = Enum.SortOrder.LayoutOrder
 			listLayout.Parent = ScrollingFrame
 			u3772 = ScrollingFrame
 
 			logEmptyState = Instance.new("TextLabel")
-			logEmptyState.Name = "EmptyState"
+			logEmptyState.Name = "ActivityEmptyState"
 			logEmptyState.AnchorPoint = Vector2.new(0.5, 0.5)
 			logEmptyState.Position = UDim2.new(0.5, 0, 0.58, 0)
-			logEmptyState.Size = UDim2.new(1, -36, 0, 54)
+			logEmptyState.Size = UDim2.new(1, -42, 0, 60)
 			logEmptyState.BackgroundTransparency = 1
 			logEmptyState.Font = Enum.Font.GothamMedium
-			logEmptyState.TextSize = 12
+			logEmptyState.TextSize = 11
 			logEmptyState.TextWrapped = true
-			logEmptyState.TextColor3 = Color3.fromRGB(144, 159, 192)
-			logEmptyState.Text = "No egg logs yet\nNew sightings will appear here automatically."
+			logEmptyState.TextColor3 = Color3.fromRGB(140, 156, 190)
+			logEmptyState.Text = "No activity yet\nEgg types appear here when they are detected."
 			logEmptyState.Parent = p890
 
 			v3776()
@@ -26590,8 +26747,8 @@ do
 		local t195 = {
 			logs = {
 				name = "Egg Logs",
-				w = 420,
-				h = 500,
+				w = 460,
+				h = 570,
 				build = function(p957)
 					return v3797(p957)
 				end
@@ -26639,7 +26796,7 @@ do
 				return
 			end
 
-			local name = "__Velox_Panel_" .. p962
+			local name = "__StealAnEgg_Panel_" .. p962
 
 			local function v4244()
 				local ok, result = pcall(function()
@@ -26788,96 +26945,16 @@ do
 
 			local TextLabel5 = Instance.new("TextLabel")
 
+			TextLabel5.Name = "PanelTitle"
 			TextLabel5.BackgroundTransparency = 1
-			TextLabel5.Position = UDim2.fromOffset(42, 12)
-			TextLabel5.Size = UDim2.fromOffset(200, 22)
+			TextLabel5.Position = UDim2.fromOffset(14, 12)
+			TextLabel5.Size = UDim2.new(1, -62, 0, 26)
 			TextLabel5.Font = Enum.Font.GothamBold
 			TextLabel5.TextSize = 16
 			TextLabel5.TextXAlignment = Enum.TextXAlignment.Left
 			TextLabel5.TextColor3 = t166.text
-			TextLabel5.Text = "Velox Hub"
+			TextLabel5.Text = v4242.name
 			TextLabel5.Parent = Frame2
-
-			local ImageLabel2 = Instance.new("ImageLabel")
-
-			ImageLabel2.AnchorPoint = Vector2.new(0, 0.5)
-			ImageLabel2.Position = UDim2.fromOffset(11, 23)
-			ImageLabel2.Size = UDim2.fromOffset(20, 20)
-			ImageLabel2.BackgroundTransparency = 1
-			ImageLabel2.Image = "rbxassetid://96240498384290"
-			ImageLabel2.ScaleType = Enum.ScaleType.Fit
-			ImageLabel2.Parent = Frame2
-
-			local Frame3 = Instance.new("Frame")
-
-			Frame3.Position = UDim2.fromOffset(14, 44)
-			Frame3.Size = UDim2.fromOffset(math.max(90, #v4242.name * 8 + 26), 24)
-			Frame3.BackgroundColor3 = t166.accent
-			Frame3.BackgroundTransparency = 0.82
-			Frame3.BorderSizePixel = 0
-			Frame3.Parent = Frame2
-			Instance.new("UICorner", Frame3).CornerRadius = UDim.new(0, 6)
-
-			local UIStroke2 = Instance.new("UIStroke", Frame3)
-
-			UIStroke2.Color = t166.accent
-			UIStroke2.Thickness = 1
-			UIStroke2.Transparency = 0.45
-
-			local TextLabel6 = Instance.new("TextLabel")
-
-			TextLabel6.BackgroundTransparency = 1
-			TextLabel6.Size = UDim2.fromScale(1, 1)
-			TextLabel6.Font = Enum.Font.GothamBold
-			TextLabel6.TextSize = 12
-			TextLabel6.TextColor3 = t166.text
-			TextLabel6.Text = v4242.name
-			TextLabel6.Parent = Frame3
-
-			local TextButton = Instance.new("TextButton")
-
-			TextButton.AnchorPoint = Vector2.new(0.5, 0.5)
-			TextButton.Position = UDim2.new(0.5, 0, 1, -36)
-			TextButton.Size = UDim2.fromOffset(176, 22)
-			TextButton.BackgroundColor3 = t166.btnBg
-			TextButton.BackgroundTransparency = 0.15
-			TextButton.AutoButtonColor = false
-			TextButton.Text = ""
-			TextButton.Parent = Frame2
-			Instance.new("UICorner", TextButton).CornerRadius = UDim.new(1, 6)
-
-			local UIStroke3 = Instance.new("UIStroke", TextButton)
-
-			UIStroke3.Color = t166.strokeCol
-			UIStroke3.Thickness = 1
-			UIStroke3.Transparency = 0.6
-
-			local ImageLabel3 = Instance.new("ImageLabel")
-
-			ImageLabel3.AnchorPoint = Vector2.new(0.5, 0.5)
-			ImageLabel3.Position = UDim2.new(0, 12, 0.5, 0)
-			ImageLabel3.Size = UDim2.fromOffset(12, 12)
-			ImageLabel3.BackgroundTransparency = 1
-			ImageLabel3.Image = "rbxassetid://94434236999817"
-			ImageLabel3.ScaleType = Enum.ScaleType.Fit
-			ImageLabel3.Parent = TextButton
-
-			local TextLabel7 = Instance.new("TextLabel")
-
-			TextLabel7.BackgroundTransparency = 1
-			TextLabel7.Position = UDim2.fromOffset(24, 0)
-			TextLabel7.Size = UDim2.new(1, -28, 1, 0)
-			TextLabel7.Font = Enum.Font.GothamBold
-			TextLabel7.TextSize = 12
-			TextLabel7.TextXAlignment = Enum.TextXAlignment.Center
-			TextLabel7.TextColor3 = t166.text
-			TextLabel7.Text = "Steal an Egg • by Ovei"
-			TextLabel7.Parent = TextButton
-			TextButton.MouseButton1Click:Connect(function()
-				pcall(function()
-					setclipboard("Velox Hub • Steal an Egg • by Ovei")
-				end)
-			end)
 
 			local TextButton2 = Instance.new("TextButton")
 
@@ -26906,8 +26983,8 @@ do
 
 			local Frame4 = Instance.new("Frame")
 
-			Frame4.Position = UDim2.fromOffset(0, 72)
-			Frame4.Size = UDim2.new(1, 0, 1, -120)
+			Frame4.Position = UDim2.fromOffset(0, 50)
+			Frame4.Size = UDim2.new(1, 0, 1, -56)
 			Frame4.BackgroundTransparency = 1
 			Frame4.BorderSizePixel = 0
 			Frame4.Parent = Frame2
@@ -27085,12 +27162,12 @@ do
 				return loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/" .. version .. "/main.lua"))()
 			end)
 			if not ok or type(result) ~= "table" then
-				warn("[Velox Hub] WindUI 1.6.66 failed to load: " .. tostring(result))
+				warn("[Steal an Egg] WindUI 1.6.66 failed to load: " .. tostring(result))
 				return
 			end
 			WindUI = result
 			WindUI:AddTheme({
-				Name = "Velox Indigo",
+				Name = "Indigo",
 				Accent = Color3.fromHex("#6366F1"),
 				Background = Color3.fromHex("#0B1020"),
 				Outline = Color3.fromHex("#26304B"),
@@ -27099,7 +27176,7 @@ do
 				Button = Color3.fromHex("#25335A"),
 				Icon = Color3.fromHex("#8BA9FF")
 			})
-			WindUI:SetTheme("Velox Indigo")
+			WindUI:SetTheme("Indigo")
 		end
 
 		local activeActionLists = {}
@@ -27252,7 +27329,7 @@ do
 				local methodName = methodMap[kind]
 				local method = methodName and rawHost[methodName]
 				if type(method) ~= "function" then
-					warn("[Velox Hub] WindUI element unavailable: " .. tostring(methodName))
+					warn("[Steal an Egg] WindUI element unavailable: " .. tostring(methodName))
 					return nil
 				end
 				return method(rawHost, translateControlConfig(config, kind))
@@ -27270,40 +27347,32 @@ do
 				if type(method) ~= "function" then
 					return adapter
 				end
-				local section = method(rawHost, {Title = tostring(title or "Section"), Opened = opened == true})
+				local section = method(rawHost, {Title = tostring(title or "Section"), Opened = true})
 				return makeHostAdapter(section)
 			end
 			adapter.AddSubSection = function(_, title)
 				return add("Paragraph", {Title = tostring(title or "Options"), Content = ""})
 			end
 			adapter.AddActionList = function(_, config) return createActionList(rawHost, config) end
-			adapter.AddLiveChat = function(_, config)
-				config = config or {}
-				return add("Paragraph", {Title = config.Title or "Live Chat", Content = "The original chat widget was bundled inside the removed third-party UI library; this source contains no chat transport to reconnect."})
-			end
-			adapter.AddSupportCard = function(_, config)
-				return add("Paragraph", {Title = "Support", Content = "The original support card's destination and handler were bundled inside the removed third-party UI library and were not present in the supplied source."})
-			end
 			return adapter
 		end
 
 		function VeloxUI:Notify(config)
 			config = config or {}
-			return WindUI:Notify({Title = config.Title or "Velox Hub", Content = config.Content or config.Desc or "", Duration = config.Duration or 3, Icon = config.Icon or "info"})
+			return WindUI:Notify({Title = config.Title or "Steal an Egg", Content = config.Content or config.Desc or "", Duration = config.Duration or 3, Icon = config.Icon or "info"})
 		end
 
 		function VeloxUI:Window(config)
 			config = config or {}
 			local rawWindow = WindUI:CreateWindow({
-				Title = "Velox Hub",
+				Title = "Steal an Egg",
 				Author = "by Ovei",
-				Icon = "egg",
-				Folder = "VeloxHub",
+				Folder = "StealAnEgg",
 				Size = UDim2.fromOffset(660, 560),
 				MinSize = Vector2.new(520, 380),
 				MaxSize = Vector2.new(900, 760),
 				ToggleKey = Enum.KeyCode.RightControl,
-				Theme = "Velox Indigo",
+				Theme = "Indigo",
 				Resizable = true,
 				SideBarWidth = 190,
 				AutoScale = true,
@@ -27329,7 +27398,7 @@ do
 			windowAdapter.AddForum = function(_, forumConfig)
 				forumConfig = forumConfig or {}
 				local rawTab = rawWindow:Tab({Title = forumConfig.Name or "Forum", Icon = forumConfig.Icon or "messages-square"})
-				local rawSection = rawTab:Section({Title = forumConfig.Section or "Forum"})
+				local rawSection = rawTab:Section({Title = forumConfig.Section or "Forum", Opened = true})
 				rawSection:Paragraph({Title = "Forum widget unavailable", Desc = "The legacy forum service was provided by the removed UI library and its transport is not included in this source."})
 				return makeHostAdapter(rawTab)
 			end
@@ -28045,7 +28114,7 @@ do
 
 				if not v4481 then
 					if not u4453 then
-						warn("[Velox Hub AutoMutation] " .. tostring(senaV4Config.MutationChoice or "Scrambled") .. " consumable habis / gak ada di inventory - ronde di-skip.")
+						warn("[Steal an Egg AutoMutation] " .. tostring(senaV4Config.MutationChoice or "Scrambled") .. " consumable habis / gak ada di inventory - ronde di-skip.")
 						u4453 = true
 					end
 
@@ -29459,8 +29528,6 @@ do
 				"AddKeybind",
 				"AddColorPicker",
 				"AddActionList",
-				"AddLiveChat",
-				"AddSupportCard",
 				"AddSubSection",
 				"AddSection",
 				"AddTab",
@@ -29502,7 +29569,7 @@ do
 			end
 
 			v4730()
-			v4742 = VeloxUI:Window({Title = "Velox Hub", Footer = "Steal an Egg • by Ovei"})
+			v4742 = VeloxUI:Window({Title = "Steal an Egg"})
 			v4779(v4742)
 			t216 = {}
 			t217 = { "Respawn Point" }
@@ -29593,7 +29660,6 @@ do
 				Name = "Main",
 				Icon = "home"
 			})
-			v4793:AddSection("Steal an Egg"):AddParagraph({Title = "Velox Hub", Content = "Steal an Egg • by Ovei"})
 			local v4794 = v4793:AddSection("Auto Steal")
 
 			t216.autoSteal = v4794:AddToggle({
@@ -30750,7 +30816,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			})
 			t216.autoExecuteURL = Player:AddInput({
 				Title = "Migrated Script HTTPS URL",
-				Content = "Raw HTTPS URL of your hosted Velox Hub Lua file. Required for Auto Execute after rejoin.",
+				Content = "Raw HTTPS URL of your hosted Steal an Egg Lua file. Required for Auto Execute after rejoin.",
 				Placeholder = "https://raw.githubusercontent.com/.../VeloxHub.lua",
 				Default = tostring(genv.__VeloxHubAutoExecuteUrl or senaV4Config.AutoExecuteURL or ""),
 				Callback = v4732(function(value)
@@ -30883,7 +30949,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 						end)
 
 						if not ok then
-							warn("[Velox Hub] Player list update loop error:", result)
+							warn("[Steal an Egg] Player list update loop error:", result)
 						end
 
 						task.wait(1)
@@ -30892,21 +30958,6 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			end
 		end
 
-		v4742:AddTab({
-			Name = "Live Chat",
-			Icon = "chat"
-		}):AddSection("Global Chat", true):AddLiveChat({
-			Title = "Live Chat",
-			Height = 300
-		})
-
-		if type(v4742.AddForum) == "function" then
-			v4742:AddForum({
-				Name = "Forum",
-				Icon = "forum",
-				Section = "Config Forum"
-			})
-		end
 
 		do
 			local __SenaV4Visual = genv.__SenaV4Visual
@@ -31130,10 +31181,6 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			})
 		end
 
-		v4742:AddTab({
-			Name = "Donate",
-			Icon = "donator"
-		}):AddSection("Support", true):AddSupportCard({})
 
 		do
 			local function v4904(p1104, p1105)
