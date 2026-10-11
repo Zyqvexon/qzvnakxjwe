@@ -12,9 +12,7 @@ local virtualUser = game:GetService("VirtualUser")
 local virtualInputManager = game:GetService("VirtualInputManager")
 local MOBILE_MODE = userInputService.TouchEnabled == true
 
-local function mobileWait(baseDelay)
-  task.wait(MOBILE_MODE and (baseDelay * 2.5) or baseDelay)
-end
+local skyMove
 
 pcall(function()
   if not table.find then
@@ -62,7 +60,7 @@ pcall(function()
     local humanoidRootPart = localPlayer.Character:FindFirstChild("HumanoidRootPart")
     local humanoid = localPlayer.Character:FindFirstChild("Humanoid")
     if humanoidRootPart then
-      local crownFlightStabilizer = humanoidRootPart:FindFirstChild("CrownFlightStabilizer")
+      local crownFlightStabilizer = humanoidRootPart:FindFirstChild("VeloxFlightStabilizer")
       if crownFlightStabilizer then crownFlightStabilizer:Destroy() end
       humanoidRootPart.AssemblyLinearVelocity = Vector3.zero
       humanoidRootPart.AssemblyAngularVelocity = Vector3.zero
@@ -75,9 +73,9 @@ pcall(function()
   local renderedEggs = workspaceService:FindFirstChild("RenderedEggs")
   if renderedEggs then
     for _, value3 in ipairs(renderedEggs:GetChildren()) do
-      local crownEggESP = value3:FindFirstChild("CrownEggESP")
+      local crownEggESP = value3:FindFirstChild("VeloxEggESP")
       if crownEggESP then pcall(function() crownEggESP:Destroy() end) end
-      local crownEggTag = value3:FindFirstChild("CrownEggTag")
+      local crownEggTag = value3:FindFirstChild("VeloxEggTag")
       if crownEggTag then pcall(function() crownEggTag:Destroy() end) end
     end
   end
@@ -625,205 +623,23 @@ pcall(function()
   end
 end)
 
-local function f17(p19)
-  local v41 = f13()
-  local nests3 = v41 and v41:FindFirstChild("Nests")
-  if not nests3 then return end
-  for _, value13 in ipairs(nests3:GetChildren()) do
-    local v42 = value13
-    for _, value14 in ipairs(v42:GetDescendants()) do
-      local v43 = value14
-      if v43:IsA("BasePart") and v43.Name ~= "Velox_NestAnchor" then
-        v43.LocalTransparencyModifier = p19 and 0 or 1
-        if not v43:GetAttribute("NestWatched") then
-          v43:SetAttribute("NestWatched", true)
-          v43:GetPropertyChangedSignal("LocalTransparencyModifier"):Connect(function()
-            if veloxHubState.SpawnNest and v43.LocalTransparencyModifier ~= 0 then
-              v43.LocalTransparencyModifier = 0
-            end
-          end)
-        end
-      end
-    end
-    local cook45NestAnchor = v42:FindFirstChild("Velox_NestAnchor")
-    if p19 then
-      if not cook45NestAnchor then
-        cook45NestAnchor = Instance.new("Part")
-        cook45NestAnchor.Name = "Velox_NestAnchor"
-        cook45NestAnchor.Size = Vector3.new(2, 2, 2)
-        cook45NestAnchor.CFrame = v42:GetPivot() * CFrame.new(0, 1.5, 0)
-        cook45NestAnchor.Transparency = 1
-        cook45NestAnchor.CanCollide = false
-        cook45NestAnchor.CanTouch = false
-        cook45NestAnchor.CanQuery = false
-        cook45NestAnchor.Anchored = true
-        cook45NestAnchor.Parent = v42
-      end
-      local nestPlacePrompt = cook45NestAnchor:FindFirstChildOfClass("ProximityPrompt")
-      if not nestPlacePrompt then
-        nestPlacePrompt = Instance.new("ProximityPrompt")
-        nestPlacePrompt.Name = "NestPlacePrompt"
-        nestPlacePrompt.ActionText = "Place Egg"
-        nestPlacePrompt.ObjectText = "Nest " .. v42.Name
-        nestPlacePrompt.HoldDuration = 0
-        nestPlacePrompt.MaxActivationDistance = 25
-        nestPlacePrompt.RequiresLineOfSight = false
-        nestPlacePrompt.Parent = cook45NestAnchor
-        nestPlacePrompt.Triggered:Connect(function(p20)
-          if p20 == localPlayer2 then
-            if v42:GetAttribute("Occupied") then
-              if v347 then
-                v347:Notify({ Title = "Nest Full", Content = "This nest is already occupied!", Duration = 2, Icon = "alert-circle" })
-              end
-              return
-            else
-              local character3 = localPlayer2.Character
-              local humanoid3 = character3 and character3:FindFirstChildOfClass("Humanoid")
-              local v44 = nil
-              if character3 then
-                for _, value15 in ipairs(character3:GetChildren()) do
-                  if value15:IsA("Tool") and (value15:HasTag("Egg") or string.find(value15.Name, "Egg")) then
-                    v44 = value15
-                    break
-                  end
-                end
-              end
-              if not v44 and localPlayer2:FindFirstChild("Backpack") then
-                for _, value16 in ipairs(localPlayer2.Backpack:GetChildren()) do
-                  if value16:IsA("Tool") and (value16:HasTag("Egg") or string.find(value16.Name, "Egg")) then
-                    v44 = value16
-                    break
-                  end
-                end
-              end
-              if not v44 then
-                if v347 then
-                  v347:Notify({ Title = "No Egg", Content = "No egg tool in backpack or character!", Duration = 2, Icon = "x" })
-                end
-                return
-              end
-              if humanoid3 and v44.Parent ~= character3 then
-                humanoid3:EquipTool(v44)
-                local v45 = os.clock()
-                while v44.Parent ~= character3 and os.clock() - v45 < 0.8 do task.wait(0.05) end
-              end
-              if v44.Parent == character3 and eggPlaced then
-                task.wait(0.1)
-                eggPlaced:FireServer({ NestId = v42.Name })
-                if v347 then
-                  v347:Notify({ Title = "Nest Placed", Content = "Placed " .. v44.Name .. " in Nest " .. v42.Name .. "!", Duration = 3, Icon = "check" })
-                end
-              end
-              return
-            end
-          else
-            return
-          end
-        end)
-      end
-      if not cook45NestAnchor:FindFirstChild("NestStatusESP") then
-        local nestStatusESP = Instance.new("BillboardGui")
-        nestStatusESP.Name = "NestStatusESP"
-        nestStatusESP.Size = UDim2.new(0, 140, 0, 30)
-        nestStatusESP.StudsOffset = Vector3.new(0, 2.5, 0)
-        nestStatusESP.AlwaysOnTop = true
-        nestStatusESP.Adornee = cook45NestAnchor
-        nestStatusESP.Enabled = true
-        nestStatusESP.Parent = cook45NestAnchor
-        local statusLabel2 = Instance.new("TextLabel")
-        statusLabel2.Name = "StatusLabel"
-        statusLabel2.Size = UDim2.new(1, 0, 1, 0)
-        statusLabel2.BackgroundTransparency = 0.4
-        statusLabel2.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-        statusLabel2.TextColor3 = Color3.fromRGB(255, 255, 255)
-        statusLabel2.Font = Enum.Font.GothamBold
-        statusLabel2.TextSize = 13
-        statusLabel2.BorderSizePixel = 0
-        statusLabel2.Parent = nestStatusESP
-        local uiCorner5 = Instance.new("UICorner")
-        uiCorner5.CornerRadius = UDim.new(0, 6)
-        uiCorner5.Parent = statusLabel2
-      end
-      local function f18()
-        local v46 = v42:GetAttribute("Occupied") == true
-        local v47 = cook45NestAnchor
-        local v48 = v42:GetAttribute("Unlocked") ~= false
-        local statusLabel3 = v47:FindFirstChild("NestStatusESP")
-          and cook45NestAnchor.NestStatusESP:FindFirstChild("StatusLabel")
-        if statusLabel3 then
-          if not v48 then
-            statusLabel3.Text = "[Locked] Nest " .. v42.Name
-            statusLabel3.TextColor3 = Color3.fromRGB(220, 80, 80)
-          elseif v46 then
-            statusLabel3.Text = "[Incubating] Nest " .. v42.Name
-            statusLabel3.TextColor3 = Color3.fromRGB(255, 200, 50)
-          else
-            statusLabel3.Text = "[Ready] Nest " .. v42.Name
-            statusLabel3.TextColor3 = Color3.fromRGB(80, 255, 120)
-          end
-        end
-        if nestPlacePrompt then nestPlacePrompt.Enabled = v48 and not v46 end
-      end
-      v42:GetAttributeChangedSignal("Occupied"):Connect(f18)
-      v42:GetAttributeChangedSignal("Unlocked"):Connect(f18)
-      f18()
-    elseif cook45NestAnchor then
-      local proximityPrompt = cook45NestAnchor:FindFirstChildOfClass("ProximityPrompt")
-      if proximityPrompt then proximityPrompt.Enabled = false end
-      local nestStatusESP2 = cook45NestAnchor:FindFirstChild("NestStatusESP")
-      if nestStatusESP2 then nestStatusESP2.Enabled = false end
-    end
-  end
-end
-
-local function f19(p21)
-  local v50 = tonumber(p21) or 0
-  if v50 >= 1000000000000000 then return string.format("%.2fQa", v50 / 1000000000000000)
-  elseif v50 >= 1000000000000 then return string.format("%.2fT", v50 / 1000000000000)
-  elseif v50 >= 1000000000 then return string.format("%.2fB", v50 / 1000000000)
-  elseif v50 >= 1000000 then return string.format("%.2fM", v50 / 1000000)
-  else
-    if v50 >= 1000 then return string.format("%.2fK", v50 / 1000) end
-    return tostring(math.floor(v50))
-  end
-end
-
-local v51 = {}
-
-local function f20(p22)
-  if not p22 then return {} end
-  if v51[p22] then return v51[p22] end
-  if v14 and v14.GetOdds then
-    local v52, v53 = pcall(function() return v14.GetOdds(p22) end)
-    if v52 and type(v53) == "table" then
-      local v54 = {}
-      for _, value17 in ipairs(v53) do
-        if value17.PetName and value17.Chance then v54[value17.PetName] = value17.Chance end
-      end
-      v51[p22] = v54
-      return v54
-    end
-  end
-  return {}
-end
-
 local function f22(p24, p25)
   if not p24 then return false end
   if localPlayer2:GetAttribute("InVolcano") == true
     and localPlayer2:GetAttribute("VolcanoValidated") == true then
     return true
   else
-    v35.Status = "Warping to Volcano Sky Platform..."
+    v35.Status = "Flying to Volcano Sky Platform..."
     f8()
-    p24.AssemblyLinearVelocity = Vector3.zero
-    p24.AssemblyAngularVelocity = Vector3.zero
-    p24.CFrame = cframe
+    if skyMove and skyMove.MoveTo then
+      skyMove.MoveTo(cframe.Position, nil, 6)
+    end
     task.wait(0.12)
     local volcano = workspaceService:FindFirstChild("Volcano")
     local volcanoEntrance = volcano and volcano:FindFirstChild("VolcanoEntrance")
     local volcanoValidate = volcano and volcano:FindFirstChild("VolcanoValidate")
     v35.Status = "Tweening into Cave Doors..."
-    local v56 = math.clamp((cframe2.Position - p24.Position).Magnitude / 40, 0.6, 1.6)
+    local v56 = math.clamp((cframe2.Position - p24.Position).Magnitude / math.max(tonumber(veloxHubState.TweenSpeed) or 50, 20), 0.4, 3)
     local create3 = tweenService:Create(p24, TweenInfo.new(v56, Enum.EasingStyle.Linear), { CFrame = cframe2 })
     create3:Play()
     local v57 = os.clock()
@@ -865,9 +681,9 @@ local function f23(p26, p27)
   end
   if v58 and (v59 or localPlayer2:GetAttribute("InVolcano") == true) then
     v35.Status = "Escaping Volcano through Lair Door..."
-    p26.AssemblyLinearVelocity = Vector3.zero
-    p26.AssemblyAngularVelocity = Vector3.zero
-    p26.CFrame = cframe2
+    if skyMove and skyMove.MoveTo then
+      skyMove.MoveTo(cframe2.Position, nil, 6)
+    end
     task.wait(0.08)
     local volcano2 = workspaceService:FindFirstChild("Volcano")
     local volcanoEntrance2 = volcano2 and volcano2:FindFirstChild("VolcanoEntrance")
@@ -876,9 +692,9 @@ local function f23(p26, p27)
       if volcanoValidate2 then pcall(firetouchinterest, p26, volcanoValidate2, 0) end
       if volcanoEntrance2 then pcall(firetouchinterest, p26, volcanoEntrance2, 0) end
     end
-    p26.AssemblyLinearVelocity = Vector3.zero
-    p26.AssemblyAngularVelocity = Vector3.zero
-    p26.CFrame = cframe
+    if skyMove and skyMove.MoveTo then
+      skyMove.MoveTo(cframe.Position, nil, 6)
+    end
     if firetouchinterest then
       if volcanoValidate2 then pcall(firetouchinterest, p26, volcanoValidate2, 1) end
       if volcanoEntrance2 then pcall(firetouchinterest, p26, volcanoEntrance2, 1) end
@@ -1052,6 +868,25 @@ local function f26(p30)
     end
   end
   return false
+end
+
+local v51 = {}
+
+local function f20(p22)
+  if not p22 then return {} end
+  if v51[p22] then return v51[p22] end
+  if v14 and v14.GetOdds then
+    local v52, v53 = pcall(function() return v14.GetOdds(p22) end)
+    if v52 and type(v53) == "table" then
+      local v54 = {}
+      for _, value17 in ipairs(v53) do
+        if value17.PetName and value17.Chance then v54[value17.PetName] = value17.Chance end
+      end
+      v51[p22] = v54
+      return v54
+    end
+  end
+  return {}
 end
 
 local function f27()
@@ -1714,7 +1549,7 @@ local function f36(p56, p57)
   end)
 end
 
-local skyMove = {}
+skyMove = {}
 
 do
   local CRUISE_HEIGHT = 45
@@ -1788,8 +1623,14 @@ do
     if not hrp or typeof(target) ~= "Vector3" then return false end
     local arrive = arriveDist or 4
     if (hrp.Position - target).Magnitude <= arrive then return true end
-    local startPosition = hrp.Position
     local waypoints = route(hrp.Position, target, opts or skyMove.RouteOpts())
+
+    local totalDist = 0
+    local lastPt = hrp.Position
+    for _, wp in ipairs(waypoints) do
+      totalDist = totalDist + (wp - lastPt).Magnitude
+      lastPt = wp
+    end
 
     local startedAt = os.clock()
     local lastProgress = os.clock()
@@ -1804,7 +1645,7 @@ do
     local noclipConn = noclipConnection()
     local index = 1
     local arrived = false
-    local hardCap = 120
+    local hardCap = (totalDist / math.max(currentSpeed(), 20)) * 3 + 15
 
     while os.clock() - startedAt < hardCap do
       if token.Cancelled or (cancelFn and cancelFn()) then break end
@@ -1855,8 +1696,8 @@ do
     end
 
     hrp = root()
-    if hrp and hrp.Position.Y < math.min(target.Y, startPosition.Y) - 40 then
-      local recoverTo = arrived and target or startPosition
+    if hrp and hrp.Position.Y < math.min(target.Y, lastPt.Y) - 40 then
+      local recoverTo = arrived and target or waypoints[1]
       pcall(function()
         hrp.CFrame = CFrame.new(recoverTo + Vector3.new(0, 5, 0))
       end)
@@ -1923,7 +1764,7 @@ do
       local hrp = root()
       if hrp then
         pcall(function()
-          hrp.CFrame = CFrame.new(stagePos) * hrp.CFrame.Rotation
+          hrp.CFrame = CFrame.new(hrp.Position:Lerp(stagePos, 0.35)) * hrp.CFrame.Rotation
           hrp.AssemblyLinearVelocity = Vector3.zero
         end)
       end
@@ -1999,26 +1840,17 @@ local f37
 local function f38(p58, p59)
   local _, v149 = f12()
   if not v149 then return false, "no_hrp" end
-  local cframe4
-  local v152 = p58 - v149.Position
-  if v152.Magnitude > 0.05 then
-    local vector2 = Vector3.new(v152.X, 0, v152.Z)
-    if vector2.Magnitude > 0.05 then
-      cframe4 = CFrame.lookAt(p58 + Vector3.new(0, 1.8, 0), p58 + Vector3.new(0, 1.8, 0) + vector2.Unit)
-    else
-      cframe4 = CFrame.new(p58 + Vector3.new(0, 1.8, 0))
-    end
-  else
-    cframe4 = CFrame.new(p58 + Vector3.new(0, 1.8, 0))
+  local destination = p58 + Vector3.new(0, 1.8, 0)
+  if (v149.Position - destination).Magnitude <= 4 then return true, "ok" end
+  if skyMove and skyMove.MoveTo then
+    local moved = skyMove.MoveTo(destination, nil, 4)
+    if moved then return true, "ok" end
   end
-  v149.AssemblyLinearVelocity = Vector3.zero
-  v149.AssemblyAngularVelocity = Vector3.zero
-  v149.CFrame = cframe4
-  return true, "ok"
+  return false, "move_failed"
 end
 
 function f37(p60, p61)
-  local crownFlightStabilizer3 = p60:FindFirstChild("CrownFlightStabilizer")
+  local crownFlightStabilizer3 = p60:FindFirstChild("VeloxFlightStabilizer")
   if crownFlightStabilizer3 then crownFlightStabilizer3:Destroy() end
   if p61 then
     p61.PlatformStand = false
@@ -2254,17 +2086,11 @@ function f39(p63)
     v35.CurrentTween = nil
   end
   f37(v190, v191)
-  v35.Status = "Warping directly to Volcano Top..."
-  v190.AssemblyLinearVelocity = Vector3.zero
-  v190.AssemblyAngularVelocity = Vector3.zero
-  v190.CFrame = CFrame.new(vector)
-  task.wait(0.2)
-  if (v190.Position - vector).Magnitude > 25 then
-    v190.AssemblyLinearVelocity = Vector3.zero
-    v190.AssemblyAngularVelocity = Vector3.zero
-    v190.CFrame = CFrame.new(vector)
-    task.wait(0.1)
+  v35.Status = "Flying to Volcano Top..."
+  if skyMove and skyMove.MoveTo then
+    skyMove.MoveTo(vector, nil, 6)
   end
+  task.wait(0.2)
   v35.Status = "Triggering Magma Lava Dip..."
   local reVolcanoDip = replicatedStorage:FindFirstChild("packages")
     and replicatedStorage.packages:FindFirstChild("Net")
@@ -2308,9 +2134,7 @@ function f39(p63)
     else
       local _, v196 = f12()
       if v196 and (v196.Position - vector).Magnitude > 30 then
-        v196.AssemblyLinearVelocity = Vector3.zero
-        v196.AssemblyAngularVelocity = Vector3.zero
-        v196.CFrame = CFrame.new(vector)
+        v196.CFrame = CFrame.new(v196.Position:Lerp(vector, 0.08))
       end
       local volcanoUntil2 = v188:GetAttribute("VolcanoUntil")
       if volcanoUntil2 and type(volcanoUntil2) == "number"
@@ -2406,19 +2230,10 @@ task.spawn(function()
                 local _, v201n2 = f12()
                 v201 = v201n2
                 if v201 then
-                  v201.AssemblyLinearVelocity = Vector3.zero
-                  v201.AssemblyAngularVelocity = Vector3.zero
                   local position7 = v202.Position
                   local parent = v202.Prompt and v202.Prompt.Parent
                   if parent and parent:IsA("BasePart") then position7 = parent.Position end
-                  v201.CFrame = CFrame.new(position7.X, position7.Y + 2, position7.Z)
-                  task.wait(0.08)
-                  if (v201.Position - position7).Magnitude > 25 then
-                    v201.AssemblyLinearVelocity = Vector3.zero
-                    v201.AssemblyAngularVelocity = Vector3.zero
-                    v201.CFrame = CFrame.new(position7.X, position7.Y + 2, position7.Z)
-                    task.wait(0.05)
-                  end
+                  skyMove.MoveTo(position7 + Vector3.new(0, 2, 0), nil, 4)
                   v204 = true
                 end
               else
@@ -2818,8 +2633,7 @@ task.spawn(function()
         local v238 = require(replicatedStorage.GameServices.FusionRules)
         if fusionStatus == "Result" then
           if (v232.Position - vector5).Magnitude > 25 then
-            v232.CFrame = CFrame.new(vector5 + Vector3.new(0, 3, 0))
-            task.wait(0.4)
+            skyMove.MoveTo(vector5 + Vector3.new(0, 3, 0), nil, 4)
           end
           if fusionSlots:GetAttribute("FusionFailed") == true then
             fusionAction:FireServer("Claim", fusionSlots:GetAttribute("FusionResultKey"))
@@ -2847,8 +2661,7 @@ task.spawn(function()
           local endsAt = fusionSlots:GetAttribute("EndsAt")
           if workspace:GetServerTimeNow() >= (endsAt or 0) then
             if (v232.Position - vector5).Magnitude > 25 then
-              v232.CFrame = CFrame.new(vector5 + Vector3.new(0, 3, 0))
-              task.wait(0.4)
+              skyMove.MoveTo(vector5 + Vector3.new(0, 3, 0), nil, 4)
             end
             fusionAction:FireServer("Fuse")
             task.wait(2)
@@ -2868,8 +2681,7 @@ task.spawn(function()
             local v241 = v238.Preview(v240)
             if cash < (v241 and v241.FuseCost or 0) then return end
             if (v232.Position - vector5).Magnitude > 25 then
-              v232.CFrame = CFrame.new(vector5 + Vector3.new(0, 3, 0))
-              task.wait(0.4)
+              skyMove.MoveTo(vector5 + Vector3.new(0, 3, 0), nil, 4)
             end
             fusionAction:FireServer("Start")
             task.wait(2)
@@ -2905,8 +2717,7 @@ task.spawn(function()
                 if cash < (v247 and v247.FuseCost or 0) then return end
               end
               if (v232.Position - vector5).Magnitude > 25 then
-                v232.CFrame = CFrame.new(vector5 + Vector3.new(0, 3, 0))
-                task.wait(0.4)
+                skyMove.MoveTo(vector5 + Vector3.new(0, 3, 0), nil, 4)
               end
               for _, value65 in ipairs(v239) do
                 if #v243 == 0 then break
@@ -3993,9 +3804,9 @@ task.spawn(function()
 
       local startedAt = tick()
 
-      pcall(function()
-        hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
-      end)
+      if skyMove and skyMove.MoveTo then
+        skyMove.MoveTo(pos + Vector3.new(0, 3, 0), nil, 4)
+      end
       task.wait(halloweenCfg.TPWait)
 
       halloweenPressE()
@@ -4004,9 +3815,9 @@ task.spawn(function()
 
       local padPos = halloweenGetPos(halloweenGetPad())
       if padPos then
-        pcall(function()
-          hrp.CFrame = CFrame.new(padPos + Vector3.new(0, 5, 0))
-        end)
+        if skyMove and skyMove.MoveTo then
+          skyMove.MoveTo(padPos + Vector3.new(0, 5, 0), nil, 4)
+        end
         task.wait(halloweenCfg.PadWait)
       end
 
