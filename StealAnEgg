@@ -23032,24 +23032,24 @@ do
 		local EggState2 = require(ReplicatedStorage.Client.EggState)
 		local Save = require(ReplicatedStorage.Shared.Save)
 		local t166 = {
-			strokeCol = Color3.fromRGB(36, 36, 42),
-			accent = Color3.fromRGB(26, 147, 250),
-			accentA = Color3.fromRGB(19, 96, 250),
-			accentB = Color3.fromRGB(33, 198, 250),
-			surface = Color3.fromRGB(22, 22, 27),
-			surfaceHi = Color3.fromRGB(28, 28, 34),
-			text = Color3.fromRGB(235, 236, 245),
-			btnText = Color3.fromRGB(186, 184, 198),
-			muted = Color3.fromRGB(156, 154, 170),
-			shadow = Color3.fromRGB(4, 4, 8),
-			obsTop = Color3.fromRGB(18, 18, 24),
-			obsMid = Color3.fromRGB(12, 12, 16),
-			obsLow = Color3.fromRGB(10, 14, 26),
-			btnBg = Color3.fromRGB(30, 30, 36),
-			btnHover = Color3.fromRGB(44, 44, 52),
-			inputBg = Color3.fromRGB(14, 14, 18),
-			switchOff = Color3.fromRGB(42, 42, 48),
-			good = Color3.fromRGB(163, 230, 53)
+			strokeCol = Color3.fromRGB(41, 54, 86),
+			accent = Color3.fromRGB(87, 104, 255),
+			accentA = Color3.fromRGB(65, 79, 224),
+			accentB = Color3.fromRGB(87, 172, 255),
+			surface = Color3.fromRGB(17, 25, 44),
+			surfaceHi = Color3.fromRGB(22, 31, 52),
+			text = Color3.fromRGB(240, 244, 255),
+			btnText = Color3.fromRGB(167, 181, 214),
+			muted = Color3.fromRGB(139, 155, 190),
+			shadow = Color3.fromRGB(4, 6, 15),
+			obsTop = Color3.fromRGB(17, 24, 43),
+			obsMid = Color3.fromRGB(12, 18, 33),
+			obsLow = Color3.fromRGB(9, 13, 26),
+			btnBg = Color3.fromRGB(24, 32, 52),
+			btnHover = Color3.fromRGB(34, 45, 74),
+			inputBg = Color3.fromRGB(13, 20, 36),
+			switchOff = Color3.fromRGB(39, 49, 74),
+			good = Color3.fromRGB(83, 218, 180)
 		}
 		local v3697 = t166
 
@@ -23690,8 +23690,27 @@ do
 			local searchStroke = Instance.new("UIStroke", searchFrame)
 			searchStroke.Color = Color3.fromRGB(43, 58, 92)
 			searchStroke.Transparency = 0.2
-			local searchHint = makeLabel(searchFrame, "SearchMark", UDim2.fromOffset(10, 0), UDim2.fromOffset(20, 32), "⌕", 17, Color3.fromRGB(129, 147, 195), Enum.Font.GothamBold, Enum.TextXAlignment.Center)
-			searchHint.TextYAlignment = Enum.TextYAlignment.Center
+			local searchGlass = Instance.new("Frame")
+			searchGlass.Name = "SearchGlass"
+			searchGlass.Position = UDim2.fromOffset(11, 9)
+			searchGlass.Size = UDim2.fromOffset(11, 11)
+			searchGlass.BackgroundTransparency = 1
+			searchGlass.BorderSizePixel = 0
+			searchGlass.Parent = searchFrame
+			local searchGlassStroke = Instance.new("UIStroke")
+			searchGlassStroke.Color = Color3.fromRGB(129, 147, 195)
+			searchGlassStroke.Thickness = 1.5
+			searchGlassStroke.Parent = searchGlass
+			Instance.new("UICorner", searchGlass).CornerRadius = UDim.new(1, 0)
+			local searchGlassHandle = Instance.new("Frame")
+			searchGlassHandle.Name = "SearchGlassHandle"
+			searchGlassHandle.Position = UDim2.fromOffset(20, 20)
+			searchGlassHandle.Size = UDim2.fromOffset(6, 2)
+			searchGlassHandle.Rotation = 45
+			searchGlassHandle.BackgroundColor3 = Color3.fromRGB(129, 147, 195)
+			searchGlassHandle.BorderSizePixel = 0
+			searchGlassHandle.Parent = searchFrame
+			Instance.new("UICorner", searchGlassHandle).CornerRadius = UDim.new(1, 0)
 
 			logSearchBox = Instance.new("TextBox")
 			logSearchBox.Name = "SearchEggTypes"
@@ -26441,7 +26460,7 @@ do
 			t176.headLbl.TextXAlignment = Enum.TextXAlignment.Left
 			t176.headLbl.TextTruncate = Enum.TextTruncate.AtEnd
 			t176.headLbl.TextColor3 = v3697.accent
-			t176.headLbl.Text = "Global Egg Data & History"
+			t176.headLbl.Text = "GLOBAL DATA / HISTORY"
 			t176.headLbl.Parent = Frame
 
 			local Frame2 = Instance.new("Frame")
@@ -26810,6 +26829,104 @@ do
 			}
 		}
 
+		local function applyAuxPanelDesign(panelKey, root)
+			if panelKey == "logs" or not root or not root.Parent then
+				return
+			end
+
+			local copy = {
+				eggs = {eyebrow = "COLLECTION / PLACEMENT", title = "Egg Board", subtitle = "Manage unplaced eggs and your placement list."},
+				inventory = {eyebrow = "YOUR COLLECTION", title = "Inventory & Base", subtitle = "Browse backpack or equipped pets, then sort."},
+				checker = {eyebrow = "FIELD OVERVIEW", title = "Egg Checker", subtitle = "Filter available eggs and review their details."},
+				eggdata = {eyebrow = "SPAWN INTELLIGENCE", title = "Egg Data & History", subtitle = "Estimated targets and sightings from available data."}
+			}
+			local panelCopy = copy[panelKey]
+			if not panelCopy or root:FindFirstChild("SharedPanelHeader") then
+				return
+			end
+
+			local shift = 58
+			for _, child in ipairs(root:GetChildren()) do
+				if child:IsA("GuiObject") then
+					local position = child.Position
+					if position.Y.Scale == 0 and position.Y.Offset >= 0 and position.Y.Offset < 220 then
+						child.Position = UDim2.new(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset + shift)
+						if child.Size.Y.Scale > 0 then
+							local size = child.Size
+							child.Size = UDim2.new(size.X.Scale, size.X.Offset, size.Y.Scale, size.Y.Offset - shift)
+						end
+					end
+				end
+			end
+
+			local header = Instance.new("Frame")
+			header.Name = "SharedPanelHeader"
+			header.Position = UDim2.fromOffset(14, 0)
+			header.Size = UDim2.new(1, -28, 0, 52)
+			header.BackgroundColor3 = Color3.fromRGB(15, 22, 39)
+			header.BackgroundTransparency = 0
+			header.BorderSizePixel = 0
+			header.ZIndex = 2
+			header.Parent = root
+			Instance.new("UICorner", header).CornerRadius = UDim.new(0, 9)
+			local headerStroke = Instance.new("UIStroke")
+			headerStroke.Color = Color3.fromRGB(41, 54, 86)
+			headerStroke.Transparency = 0.25
+			headerStroke.Thickness = 1
+			headerStroke.Parent = header
+
+			local accent = Instance.new("Frame")
+			accent.Name = "AccentBar"
+			accent.Position = UDim2.fromOffset(0, 10)
+			accent.Size = UDim2.fromOffset(3, 32)
+			accent.BackgroundColor3 = Color3.fromRGB(87, 104, 255)
+			accent.BorderSizePixel = 0
+			accent.ZIndex = 3
+			accent.Parent = header
+			Instance.new("UICorner", accent).CornerRadius = UDim.new(1, 0)
+
+			local eyebrow = Instance.new("TextLabel")
+			eyebrow.Name = "Eyebrow"
+			eyebrow.BackgroundTransparency = 1
+			eyebrow.Position = UDim2.fromOffset(12, 5)
+			eyebrow.Size = UDim2.new(1, -24, 0, 11)
+			eyebrow.Font = Enum.Font.GothamBold
+			eyebrow.TextSize = 8
+			eyebrow.TextColor3 = Color3.fromRGB(135, 151, 192)
+			eyebrow.TextXAlignment = Enum.TextXAlignment.Left
+			eyebrow.Text = panelCopy.eyebrow
+			eyebrow.ZIndex = 3
+			eyebrow.Parent = header
+
+			local title = Instance.new("TextLabel")
+			title.Name = "Heading"
+			title.BackgroundTransparency = 1
+			title.Position = UDim2.fromOffset(12, 16)
+			title.Size = UDim2.new(1, -24, 0, 20)
+			title.Font = Enum.Font.GothamBold
+			title.TextSize = 14
+			title.TextColor3 = Color3.fromRGB(240, 244, 255)
+			title.TextXAlignment = Enum.TextXAlignment.Left
+			title.TextTruncate = Enum.TextTruncate.AtEnd
+			title.Text = panelCopy.title
+			title.ZIndex = 3
+			title.Parent = header
+
+			local subtitle = Instance.new("TextLabel")
+			subtitle.Name = "Subtitle"
+			subtitle.BackgroundTransparency = 1
+			subtitle.Position = UDim2.fromOffset(12, 36)
+			subtitle.Size = UDim2.new(1, -24, 0, 12)
+			subtitle.Font = Enum.Font.GothamMedium
+			subtitle.TextSize = 9
+			subtitle.TextColor3 = Color3.fromRGB(148, 163, 196)
+			subtitle.TextXAlignment = Enum.TextXAlignment.Left
+			subtitle.TextTruncate = Enum.TextTruncate.AtEnd
+			subtitle.Text = panelCopy.subtitle
+			subtitle.ZIndex = 3
+			subtitle.Parent = header
+		end
+
 		local function v4241(p962)
 			v3698()
 
@@ -27091,6 +27208,21 @@ do
 				fitScale = v4260
 			}
 			local buildOk, buildError = pcall(v4242.build, Frame4)
+			if buildOk and p962 ~= "logs" then
+				local contentRoot
+				for _, child in ipairs(Frame4:GetChildren()) do
+					if child:IsA("Frame") and child.Name ~= "PanelLoadError" then
+						contentRoot = child
+						break
+					end
+				end
+				if contentRoot then
+					local designOk, designError = pcall(applyAuxPanelDesign, p962, contentRoot)
+					if not designOk then
+						warn("[Steal an Egg] Could not apply shared design to " .. tostring(v4242.name) .. ": " .. tostring(designError))
+					end
+				end
+			end
 			if not buildOk then
 				warn("[Steal an Egg] Failed to build " .. tostring(v4242.name) .. ": " .. tostring(buildError))
 				for _, child in ipairs(Frame4:GetChildren()) do
