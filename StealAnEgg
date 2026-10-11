@@ -27442,9 +27442,9 @@ do
         function SenaLibOverride:Window(config)
             config = type(config) == "table" and config or {}
             local rawWindow = WindUI:CreateWindow({
-                Title = tostring(config.Title or "Sena BETA"),
+                Title = tostring(config.Title or "Sena Hub"),
                 Author = tostring(config.Footer or "Steal An Egg") .. " • WindUI " .. WINDUI_VERSION,
-                Icon = "egg",
+                Icon = "bird",
                 Size = UDim2.fromOffset(690, 560),
                 MinSize = Vector2.new(520, 380),
                 MaxSize = Vector2.new(940, 760),
@@ -29627,11 +29627,8 @@ do
 
 			v4730()
 			v4742 = SenaLibOverride:Window({
-				Title = "Sena BETA |",
-				Footer = "Steal An Egg",
-				Version = 1,
-				Color = Color3.fromRGB(232, 232, 238),
-				Image = "http://56.10.112.179:8080/visual/sena_bg.jpg"
+				Title = "Sena Hub",
+				Footer = "Steal An Egg"
 			})
 			v4779(v4742)
 			t216 = {}
@@ -29667,13 +29664,14 @@ do
 			end
 
 			local v4791 = v4742:AddTab({
-				Name = "Admin Abuse",
-				Icon = "flame"
+				Name = "Events",
+				Icon = "calendar-days"
 			})
+			t216.eventsTab = v4791
 
 			t216.autoStealCapture = v4791:AddSection("Capture The Egg"):AddToggle({
-				Title = "Auto Steal Capture",
-				Content = "For the Capture The Egg event. Grabs the event egg for you and keeps you holding it in a safe spot so your time keeps going. Turn off normal Auto Steal while using this.",
+				Title = "Auto Carry Event Egg",
+				Content = "During Capture the Egg, picks up the event egg and keeps carrying it so your timer continues. Turn off Auto Steal before enabling this.",
 				Default = false,
 				Callback = v4732(v4724)
 			})
@@ -29681,20 +29679,20 @@ do
 			local Movement = v4791:AddSection("Movement")
 
 			t216.adminBoost = Movement:AddToggle({
-				Title = "Admin Abuse Boost",
-				Content = "Only works during Admin Abuse. Do not use it when there is no Admin Abuse.",
+				Title = "Event Movement Boost",
+				Content = "Enables the movement boost during Admin Abuse events. Turn it off when the event is not active.",
 				Default = false,
 				Callback = v4732(v4750)
 			})
 			t216.flyForCapture = Movement:AddToggle({
-				Title = "Fly For Capture",
-				Content = "For the Capture The Egg event. After you pick up an egg, you fly up and stay still in the air so nobody can take it.",
+				Title = "Fly While Carrying Event Egg",
+				Content = "After you pick up the event egg, moves you upward and keeps you airborne. Use during Capture the Egg only.",
 				Default = false,
 				Callback = v4732(v4722)
 			})
 			t216.instantGrab = Movement:AddToggle({
-				Title = "Instant Grab",
-				Content = "Picking up an egg only needs a quick tap instead of a long hold.",
+				Title = "Quick Egg Pickup",
+				Content = "Pick up an egg with a quick tap instead of holding the interaction button.",
 				Default = false,
 				Callback = v4732(v4723)
 			})
@@ -29705,14 +29703,14 @@ do
 				Callback = v4732(v4725)
 			})
 			t216.noclip = Movement:AddToggle({
-				Title = "Noclip",
+				Title = "No Clip",
 				Content = "Walk through walls and doors.",
 				Default = false,
 				Callback = v4732(v4560)
 			})
 			t216.autoRingEvent = v4791:AddSection("Ring Event"):AddToggle({
-				Title = "Auto Ring Event",
-				Content = "Starts at the safe zone, then glides Forest -> Angels & Demons -> back to Forest on a loop. Turn off Auto Steal while using this.",
+				Title = "Auto Ring Event Route",
+				Content = "Automatically follows the route between the Forest and Angels & Demons. Turn off Auto Steal before using this.",
 				Default = false,
 				Callback = v4732(v4569)
 			})
@@ -29721,8 +29719,9 @@ do
 		do
 			local v4793 = v4742:AddTab({
 				Name = "Main",
-				Icon = "home"
+				Icon = "house"
 			})
+			t216.mainTab = v4793
 			local v4794 = v4793:AddSection("Auto Steal")
 
 			t216.autoSteal = v4794:AddToggle({
@@ -29732,7 +29731,7 @@ do
 				Callback = v4732(v4526)
 			})
 			t216.helpFriend = v4794:AddToggle({
-				Title = "Help Friend",
+				Title = "Drop Egg for a Friend",
 				Content = "Instead of banking a stolen egg, drops it just before the safe zone line so a friend can pick it up.",
 				Default = false,
 				Callback = v4732(function(p1069)
@@ -29747,21 +29746,21 @@ do
 				end)
 			})
 			v4794:AddButton({
-				Title = "Egg Spawn Analyst",
-				Content = "Live global spawn tracker, timeline & forecast synced across active online players.",
+				Title = "Egg Spawn Tracker",
+				Content = "Shows recent egg spawns, a timeline, and spawn estimates shared across active sessions.",
 				Callback = v4732(function()
 					senaPanels.openAnalyst()
 				end)
 			})
 			t216.godMode = v4794:AddToggle({
-				Title = "Aura Bat",
-				Content = "",
+				Title = "Bat Aura",
+				Content = "Automatically swings the bat when a target is within range.",
 				Default = false,
 				Callback = v4732(v4528)
 			})
 			t216.stealMode = v4794:AddDropdown({
-				Title = "Steal Mode",
-				Content = "If you have good speed better use High Speed User, but if you are newbie, use Low Speed User",
+				Title = "Pickup Mode",
+				Content = "Choose a pickup mode. Low Speed is intended for slower movement; High Speed prioritizes faster pickups.",
 				Options = {
 					"Low Speed User",
 					"High Speed User",
@@ -29778,8 +29777,8 @@ do
 			end
 
 			t216.stealHold = v4794:AddSlider({
-				Title = "Low Speed Multiplier",
-				Content = "For Low Speed User. Higher = faster grab, lower = safer. Lower it if steals keep failing.",
+				Title = "Pickup Speed Multiplier",
+				Content = "Adjusts pickup speed in Low Speed mode. Lower values may help if pickups keep failing.",
 				Min = 1,
 				Max = 10,
 				Default = 5,
@@ -29791,8 +29790,8 @@ do
 
 			v4795:AddSubSection("Egg")
 			t216.names = v4795:AddDropdown({
-				Title = "Filter By Egg Name",
-				Content = "Only steal these eggs. Leave empty for any egg.",
+				Title = "Egg Name Filter",
+				Content = "Select which egg names to include. Leave this empty to allow any name.",
 				Options = v4522,
 				Multi = true,
 				Default = {},
@@ -29801,8 +29800,8 @@ do
 				end)
 			})
 			t216.rarities = v4795:AddDropdown({
-				Title = "Filter By Rarity",
-				Content = "Only steal these rarities. Leave empty for any rarity.",
+				Title = "Egg Rarities to Sell",
+				Content = "Select which rarities to include. Leave this empty to allow any rarity.",
 				Options = v4524,
 				Multi = true,
 				Default = {},
@@ -29812,8 +29811,8 @@ do
 			})
 			v4795:AddSubSection("Area & Value")
 			t216.areas = v4795:AddDropdown({
-				Title = "Select Area",
-				Content = "Only steal from these areas. Leave empty for every area.",
+				Title = "Area Filter",
+				Content = "Select the areas to include. Leave this empty to allow every area.",
 				Options = v4523,
 				Multi = true,
 				Default = {},
@@ -29822,29 +29821,29 @@ do
 				end)
 			})
 			t216.value = v4795:AddInput({
-				Title = "Steal By Value",
-				Content = "Minimum money per second. Supports k, m and b.",
+				Title = "Minimum Income per Second",
+				Content = "Only include eggs that meet this income per second. You can use k, m, or b (for example, 500k).",
 				Placeholder = "e.g. 500k, 2m, 1b",
 				Default = "",
 				Callback = v4732(v4539)
 			})
 			t216.mutations = v4795:AddDropdown({
-				Title = "Filter By Mutation",
-				Content = "Only steal eggs carrying one of these mutations. Leave empty for any egg.",
+				Title = "Mutation Filter",
+				Content = "Select the mutations to include. Leave this empty to allow any mutation.",
 				Options = t199,
 				Multi = true,
 				Default = {},
 				Callback = v4732(v4540)
 			})
 			t216.weight = v4795:AddInput({
-				Title = "Steal By Weight",
-				Content = "Minimum egg weight in kilograms. 0 accepts any weight.",
+				Title = "Minimum Egg Weight",
+				Content = "Only include eggs at or above this weight. Enter 0 to allow any weight.",
 				Placeholder = "e.g. 12000",
 				Default = "",
 				Callback = v4732(v4541)
 			})
 			t216.priority = v4795:AddDropdown({
-				Title = "Steal Priority",
+				Title = "Target Priority",
 				Content = "Which egg to go for first when more than one passes the filters.",
 				Options = {
 					"Rarity",
@@ -29855,8 +29854,8 @@ do
 				Callback = v4732(v4542)
 			})
 			t216.autoIndex = v4795:AddToggle({
-				Title = "Auto Index",
-				Content = "Also steal eggs whose pet is still missing from your Pet Index, in any area, on top of the filters above. An egg you already hold counts as covered until it hatches.",
+				Title = "Prioritize Missing Index Entries",
+				Content = "Also prioritizes eggs that can fill a missing Pet Index entry, even when they do not match the filters above.",
 				Default = false,
 				Callback = v4732(v4737)
 			})
@@ -29864,14 +29863,14 @@ do
 			local v4796 = v4793:AddSection("Egg ESP")
 
 			t216.eggEsp = v4796:AddToggle({
-				Title = "Egg ESP",
-				Content = "Draws a label over every egg on the field so you can read it from across the map.",
+				Title = "Show Egg Labels",
+				Content = "Displays a label over each egg so its details are easier to read from a distance.",
 				Default = false,
 				Callback = v4732(v4543)
 			})
 			t216.espDetails = v4796:AddDropdown({
-				Title = "ESP Details",
-				Content = "What each label shows. Placed Eggs also labels the eggs sitting on plots.",
+				Title = "Egg Label Details",
+				Content = "Choose which details appear on labels. Placed Eggs also shows eggs on plots.",
 				Options = {
 					"Name",
 					"Rarity",
@@ -29889,12 +29888,11 @@ do
 				Callback = v4732(v4544)
 			})
 			t216.backpackRates = v4796:AddToggle({
-				Title = "Backpack Value/s",
-				Content = "Shows how much money per second each egg in your backpack makes, right on its slot.",
+				Title = "Backpack Income per Second",
+				Content = "Shows the income per second for each egg in its backpack slot.",
 				Default = false,
 				Callback = v4732(v4546)
 			})
-
 
 		end
 
@@ -29904,22 +29902,19 @@ do
 				Icon = "repeat"
 			})
 
-			t216.privateTab = v4742:AddTab({
-				Name = "Private Server",
-				Icon = "users"
-			})
+			t216.privateTab = nil
 
 			local v4800 = v4799:AddSection("Egg Automation")
 
 			v4800:AddSubSection("Place")
 			t216.autoPlace = v4800:AddToggle({
-				Title = "Auto Place Egg",
+				Title = "Auto Place Eggs",
 				Content = "Places eggs from your inventory on your plot.",
 				Default = false,
 				Callback = v4732(v4566)
 			})
 			t216.placeRarity = v4800:AddDropdown({
-				Title = "Place Egg Rarity",
+				Title = "Rarities to Place",
 				Content = "Only place these rarities. Leave empty for all.",
 				Options = v4524,
 				Multi = true,
@@ -29930,14 +29925,14 @@ do
 			})
 			v4800:AddSubSection("Hatch")
 			t216.autoHatch = v4800:AddToggle({
-				Title = "Auto Hatch Egg",
+				Title = "Auto Hatch Ready Eggs",
 				Content = "Hatches your placed eggs when they are ready.",
 				Default = false,
 				Callback = v4732(v4567)
 			})
 			v4800:AddSubSection("Mutate")
 			t216.mutationChoice = v4800:AddDropdown({
-				Title = "Select Mutation",
+				Title = "Mutation Type",
 				Content = "Which mutation to apply to your placed eggs.",
 				Options = {
 					"Scrambled",
@@ -29948,7 +29943,7 @@ do
 				Callback = v4732(v4570)
 			})
 			t216.mutationSpecies = v4800:AddDropdown({
-				Title = "Mutate Egg Name",
+				Title = "Egg Names to Mutate",
 				Content = "Only mutate these eggs by name. Leave empty for every placed egg.",
 				Options = v4522,
 				Multi = true,
@@ -29956,7 +29951,7 @@ do
 				Callback = v4732(v4571)
 			})
 			t216.mutationRarity = v4800:AddDropdown({
-				Title = "Mutate Egg Rarity",
+				Title = "Egg Rarities to Mutate",
 				Content = "Only mutate placed eggs of these rarities. Leave empty for every rarity.",
 				Options = v4524,
 				Multi = true,
@@ -29964,7 +29959,7 @@ do
 				Callback = v4732(v4572)
 			})
 			t216.mutationRetry = v4800:AddToggle({
-				Title = "Retry Until Mutated",
+				Title = "Retry Until Mutation Succeeds",
 				Content = "Keep applying to one egg until it mutates or charges run out (10% per use).",
 				Default = true,
 				Callback = v4732(v4573)
@@ -29976,7 +29971,7 @@ do
 				Callback = v4732(v4568)
 			})
 			v4800:AddButton({
-				Title = "Apply Mutation Now",
+				Title = "Apply Mutation Once",
 				Content = "Run one mutation pass over your placed eggs right now.",
 				Callback = v4732(function()
 					task.spawn(function()
@@ -29992,14 +29987,14 @@ do
 			local v4802 = v4801:AddSection("Pet Selling")
 
 			t216.autoSell = v4802:AddToggle({
-				Title = "Auto Sell Pet",
-				Content = "Sells pets that match a filter below. Favorite, placed and equipped pets are kept.",
+				Title = "Auto Sell Pets",
+				Content = "Sells pets that match the filters below. Favorited, placed, and equipped pets are kept.",
 				Default = false,
 				Callback = v4732(v4574)
 			})
 			v4802:AddSubSection("Filter")
 			v4519 = v4802:AddDropdown({
-				Title = "Pet Name Filter",
+				Title = "Pet Names to Sell",
 				Content = "Pets to sell by name. Pick All for every name.",
 				Options = v4525,
 				Multi = true,
@@ -30009,7 +30004,7 @@ do
 				end)
 			})
 			v4520 = v4802:AddDropdown({
-				Title = "Pet Rarity Filter",
+				Title = "Pet Rarities to Sell",
 				Content = "Pets to sell by rarity. Pick All for every rarity.",
 				Options = v4330(v4524),
 				Multi = true,
@@ -30020,7 +30015,7 @@ do
 			})
 			t216.sellPetValue = v4802:AddInput({
 				Flag = "sellPetValue",
-				Title = "Sell By Value (max money/s)",
+				Title = "Pet Income Limit (per second)",
 				Content = "Only sell pets whose money per second is this or lower. Blank = no value limit. Supports k, m, b.",
 				Placeholder = "e.g. 100k, 2m",
 				Default = "",
@@ -30030,13 +30025,13 @@ do
 			local v4803 = v4801:AddSection("Egg Selling")
 
 			t216.autoSellEgg = v4803:AddToggle({
-				Title = "Auto Sell Egg",
-				Content = "Sells unplaced eggs of the rarities below.",
+				Title = "Auto Sell Eggs",
+				Content = "Sells eggs that have not been placed and match the selected rarities.",
 				Default = false,
 				Callback = v4732(v4575)
 			})
 			v4521 = v4803:AddDropdown({
-				Title = "Egg Rarity Filter",
+				Title = "Egg Rarities to Sell",
 				Content = "Egg rarities to sell. Pick All for every rarity.",
 				Options = v4330(v4524),
 				Multi = true,
@@ -30047,27 +30042,24 @@ do
 			})
 			t216.sellEggValue = v4803:AddInput({
 				Flag = "sellEggValue",
-				Title = "Sell By Value (max money/s)",
+				Title = "Egg Income Limit (per second)",
 				Content = "Only sell eggs whose money per second is this or lower. Blank = no value limit. Supports k, m, b.",
 				Placeholder = "e.g. 100k, 2m",
 				Default = "",
 				Callback = v4732(v4577)
 			})
 
-			local v4804 = v4742:AddTab({
-				Name = "Events",
-				Icon = "flame"
-			})
+			local v4804 = t216.eventsTab
 			local v4805 = v4801:AddSection("Pet Favorite")
 
 			t216.autoFavorite = v4805:AddToggle({
-				Title = "Auto Favorite",
-				Content = "Marks every pet that matches the rule below as a favorite, so Auto Sell and Auto Fuse leave it alone.",
+				Title = "Auto Favorite Pets",
+				Content = "Favorites pets that match the rule below, helping keep them out of Auto Sell and Auto Fuse.",
 				Default = false,
 				Callback = v4732(v4548)
 			})
 			t216.favoriteRule = v4805:AddDropdown({
-				Title = "Favorite Rule",
+				Title = "Favorite By",
 				Content = "Match pets by rarity or by species.",
 				Options = {
 					"Rarity",
@@ -30078,7 +30070,7 @@ do
 			})
 			v4805:AddSubSection("Only when Rule = Rarity")
 			t216.favoriteRarities = v4805:AddDropdown({
-				Title = "Rarities to Keep",
+				Title = "Rarities to Favorite",
 				Content = "Pets of these rarities get favorited.",
 				Options = v4524,
 				Multi = true,
@@ -30087,7 +30079,7 @@ do
 			})
 			v4805:AddSubSection("Only when Rule = Species")
 			t216.favoriteSpecies = v4805:AddDropdown({
-				Title = "Species to Keep",
+				Title = "Species to Favorite",
 				Content = "Pets of these species get favorited.",
 				Options = v4522,
 				Multi = true,
@@ -30095,7 +30087,7 @@ do
 				Callback = v4732(v4551)
 			})
 			t216.unfavoriteAll = v4805:AddButton({
-				Title = "Unfavorite Everything",
+				Title = "Unfavorite All Pets",
 				Content = "Clears the favorite flag on every pet you own.",
 				Callback = v4732(function()
 					local __SenaV4PetBarn = genv.__SenaV4PetBarn
@@ -30116,13 +30108,13 @@ do
 			local v4808 = v4801:AddSection("Pet Fusion")
 
 			t216.autoFuse = v4808:AddToggle({
-				Title = "Auto Fuse",
-				Content = "Feeds three matching pets into the Fusion machine over and over. Favorited and equipped pets are never used.",
+				Title = "Auto Fuse Matching Pets",
+				Content = "Combines matching pets through the Fusion machine. Favorited and equipped pets are not used.",
 				Default = false,
 				Callback = v4732(v4556)
 			})
 			t216.fuseRule = v4808:AddDropdown({
-				Title = "Fusion Rule",
+				Title = "Fusion Selection",
 				Content = "Fuse anything that passes the rarity filter, or only the species you pick below.",
 				Options = {
 					"Any Species",
@@ -30132,7 +30124,7 @@ do
 				Callback = v4732(v4557)
 			})
 			t216.fuseRarities = v4808:AddDropdown({
-				Title = "Rarities to Fuse",
+				Title = "Pet Rarities to Fuse",
 				Content = "Only fuse pets of these rarities. Leave empty for any rarity.",
 				Options = v4524,
 				Multi = true,
@@ -30141,7 +30133,7 @@ do
 			})
 			v4808:AddSubSection("Only when Rule = Selected Species")
 			t216.fuseSpecies = v4808:AddDropdown({
-				Title = "Species to Fuse",
+				Title = "Pet Species to Fuse",
 				Content = "Only these species go into the machine.",
 				Options = v4522,
 				Multi = true,
@@ -30152,26 +30144,26 @@ do
 			local v4809 = v4799:AddSection("Equip & Collect")
 
 			t216.autoEquipBest = v4809:AddToggle({
-				Title = "Auto Equip Best",
-				Content = "Keeps your strongest pets equipped as better ones hatch.",
+				Title = "Auto Equip Strongest Pets",
+				Content = "Automatically equips your strongest available pets when better ones are obtained.",
 				Default = false,
 				Callback = v4732(v4552)
 			})
 			t216.autoClaimOffline = v4809:AddToggle({
-				Title = "Collect Offline Income",
-				Content = "Claims the money your base earned while you were away, as soon as there is any.",
+				Title = "Claim Offline Income",
+				Content = "Claims income your base earned while you were away whenever it is available.",
 				Default = false,
 				Callback = v4732(v4553)
 			})
 			t216.autoBaseUpgrade = v4809:AddToggle({
 				Title = "Auto Upgrade Base",
-				Content = "Buys the next base tier the moment you can afford it.",
+				Content = "Purchases the next base upgrade as soon as you can afford it.",
 				Default = false,
 				Callback = v4732(v4554)
 			})
 			t216.autoClaimAlmanac = v4809:AddToggle({
-				Title = "Auto Claim Almanac",
-				Content = "Redeems every Pet Index reward that is ready. This is the reward claim, not the steal objective.",
+				Title = "Auto Claim Index Rewards",
+				Content = "Claims available rewards from the Pet Index.",
 				Default = false,
 				Callback = v4732(v4555)
 			})
@@ -30212,7 +30204,7 @@ do
 			})
 
 			t216.bloomAutoNet = v4818:AddToggle({
-				Title = "Auto Claim Net",
+				Title = "Auto Claim Butterfly Net",
 				Content = "Goes into the Enchanted Tree and claims your free Butterfly Net once.",
 				Default = false,
 				Callback = v4732(function(p1077)
@@ -30220,7 +30212,7 @@ do
 				end)
 			})
 			t216.bloomAutoCatch = v4818:AddToggle({
-				Title = "Auto Catch",
+				Title = "Auto Catch Butterflies",
 				Content = "During every Bloom (every 30 min, 5 min long) flies to the Enchanted Forest, equips the net and catches with the Catch Mode below.",
 				Default = false,
 				Callback = v4732(function(p1078)
@@ -30243,7 +30235,7 @@ do
 				end)
 			})
 			t216.bloomTiers = v4818:AddDropdown({
-				Title = "Catch Tiers",
+				Title = "Butterfly Tiers to Catch",
 				Content = "Only swing at these butterflies. Leave empty to catch every tier.",
 				Options = __SenaV4ButterflyRuntime and __SenaV4ButterflyRuntime.tierOptions() or {
 					"Radiant",
@@ -30260,7 +30252,7 @@ do
 				end)
 			})
 			t216.bloomEsp = v4818:AddToggle({
-				Title = "Butterfly ESP",
+				Title = "Show Butterfly Labels",
 				Content = "Shows every butterfly's tier and distance while a Bloom is live.",
 				Default = false,
 				Callback = v4732(function(p1081)
@@ -30269,7 +30261,7 @@ do
 			})
 			v4818:AddSubSection("Trade & Craft")
 			t216.bloomAutoTrade = v4818:AddToggle({
-				Title = "Auto Trade Up",
+				Title = "Auto Trade Up Butterflies",
 				Content = "After each Bloom, trades your butterflies up at the machine inside the Enchanted Tree.",
 				Default = false,
 				Callback = v4732(function(p1082)
@@ -30280,7 +30272,7 @@ do
 			local v4821 = __SenaV4ButterflyRuntime and __SenaV4ButterflyRuntime.recipeOptions() or { "All Recipes" }
 
 			t216.bloomRecipe = v4818:AddDropdown({
-				Title = "Trade Recipe",
+				Title = "Butterfly Trade Recipe",
 				Content = "Which trade Auto Trade Up runs. For Essence only trades up what the essence recipe is still short of.",
 				Options = v4821,
 				Multi = false,
@@ -30405,13 +30397,13 @@ do
 				Content = "Dr Scramble's shop, trade-in and boss still run while the event is live. The drones, lost parts and vault are gone from the game."
 			})
 			t216.scrambleBuy = v4839:AddToggle({
-				Title = "Auto Buy Shop",
+				Title = "Auto Buy Event Shop Items",
 				Content = "Spends samples on the shop items you pick below, as soon as you can afford them.",
 				Default = false,
 				Callback = v4732(v4564)
 			})
 			t216.scrambleBuyList = v4839:AddDropdown({
-				Title = "Shop Buy List",
+				Title = "Event Items to Buy",
 				Content = "Which shop items Auto Buy should purchase. This list fills in once the event shop is open.",
 				Options = t218,
 				Multi = true,
@@ -30420,7 +30412,7 @@ do
 			})
 			v4839:AddSubSection("Trade-In (Experimental Pets)")
 			t216.scrambleTradeInTrade = v4839:AddToggle({
-				Title = "Auto Trade-In",
+				Title = "Auto Trade In Pets",
 				Content = "When the recipe's three requirements are covered, sacrifices the cheapest pet that fits each slot. Favorited, equipped, placed and fusing pets are never spent.",
 				Default = false,
 				Callback = v4732(function(p1091)
@@ -30428,7 +30420,7 @@ do
 				end)
 			})
 			t216.scrambleTradeInReroll = v4839:AddToggle({
-				Title = "Auto Free Reroll",
+				Title = "Auto Use Free Reroll",
 				Content = "When pets are missing and a free reroll is left, rerolls the recipe instead of waiting.",
 				Default = false,
 				Callback = v4732(function(p1092)
@@ -30436,7 +30428,7 @@ do
 				end)
 			})
 			t216.scrambleTradeInBanners = v4839:AddDropdown({
-				Title = "Target Banners",
+				Title = "Banners for Trade In",
 				Content = "Only work the trade-in while one of these banners is up. Leave empty to accept any banner.",
 				Options = {
 					"Biohazard Pets",
@@ -30448,7 +30440,7 @@ do
 				Callback = v4732(v4545)
 			})
 			v4839:AddButton({
-				Title = "Trade-In Once",
+				Title = "Trade In Once",
 				Content = "Runs one sacrifice right now, even with Auto Trade-In off.",
 				Callback = v4732(function()
 					local __SenaV4ScrambleTradeIn = genv.__SenaV4ScrambleTradeIn
@@ -30486,7 +30478,7 @@ do
 				end)
 			})
 			v4839:AddButton({
-				Title = "Open Trade-In UI",
+				Title = "Open Trade In Menu",
 				Content = "Opens Dr Scramble's Lab window so you can pick pets by hand.",
 				Callback = v4732(function()
 					if not pcall(function()
@@ -30525,7 +30517,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			end)
 			v4839:AddSubSection("Boss Fight")
 			t216.scrambleBossAuto = v4839:AddToggle({
-				Title = "Auto Boss",
+				Title = "Auto Fight Event Boss",
 				Content = "When Dr Scramble's boss is live, walks into the arena portal, joins the fight, hits the nearest target with your bat and breaks free from grabs. The clear reward lands automatically. While Auto Steal is on and this is off, an accidental touch on the arena portal is bounced back out so your steal is never hijacked.",
 				Default = false,
 				Callback = v4732(function(p1093)
@@ -30559,7 +30551,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local Treadmill = v4799:AddSection("Treadmill")
 
 			t216.autoTreadmill = Treadmill:AddToggle({
-				Title = "Auto Treadmill",
+				Title = "Auto Train on Treadmill",
 				Content = "Walks to your treadmill and farms speed whenever nothing else is running.",
 				Default = false,
 				Callback = v4732(v4529)
@@ -30575,24 +30567,26 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 		do
 			local v4851 = v4742:AddTab({
 				Name = "Misc",
-				Icon = "settings"
+				Icon = "sliders-horizontal"
 			})
+			t216.miscTab = v4851
+			t216.privateTab = v4851
 			local Performance = v4851:AddSection("Performance")
 
 			t216.startupBoost = Performance:AddToggle({
-				Title = "Startup Boost",
+				Title = "Startup Performance Boost",
 				Content = "Lowers graphics when the script starts. Turn it off to get the graphics back; hidden pets and eggs return after a rejoin.",
 				Default = true,
 				Callback = v4732(v4717)
 			})
 			t216.boostFps = Performance:AddToggle({
-				Title = "Boost FPS",
+				Title = "Improve FPS",
 				Content = "Removes extra map details and other players' plots for more FPS.",
 				Default = false,
 				Callback = v4732(v4719)
 			})
 			t216.uncapFps = Performance:AddToggle({
-				Title = "Uncap FPS",
+				Title = "Raise FPS Limit",
 				Content = "Raises the FPS cap to 240.",
 				Default = true,
 				Callback = v4732(v4720)
@@ -30601,13 +30595,13 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local Guard = v4851:AddSection("Guard")
 
 			t216.antiGuardKnockback = Guard:AddToggle({
-				Title = "Anti Guard Knockback",
+				Title = "Prevent Guard Knockback",
 				Content = "Cancels the knockback the Forest guard puts on you, so a hit never throws you off the lane.",
 				Default = true,
 				Callback = v4732(v4547)
 			})
 			t216.antiHitGuard = Guard:AddToggle({
-				Title = "Anti Hit Guard",
+				Title = "Avoid Guard Hits",
 				Content = "For eggs you pick up by hand. Pins you in the safe zone behind a look-alike clone until the guard goes back to sleep. Auto Steal has its own guard handling and always wins.",
 				Default = false,
 				Callback = v4732(v4726)
@@ -30623,7 +30617,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			Windows:AddButton({
-				Title = "Egg Board",
+				Title = "Egg List",
 				Content = "Sortable list of the eggs currently up for grabs.",
 				Callback = v4732(function()
 					senaPanels.openBoard()
@@ -30644,7 +30638,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			Windows:AddButton({
-				Title = "Egg Data & History",
+				Title = "Egg Data and Spawn History",
 				Content = "Drop-table values per area, plus what has actually spawned this session.",
 				Callback = v4732(function()
 					senaPanels.openAnalyst()
@@ -30671,14 +30665,14 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local v4855 = v4851:AddSection("Server Hop")
 
 			t216.hopNoMatch = v4855:AddToggle({
-				Title = "Hop When Nothing Matches",
+				Title = "Change Server When No Eggs Match",
 				Content = "Hop to the emptiest server when no egg matches your filters.",
 				Default = false,
 				Callback = v4732(v4531)
 			})
 			v4855:AddSubSection("Limits")
 			t216.hopCooldown = v4855:AddSlider({
-				Title = "Hop Cooldown",
+				Title = "Server Hop Delay",
 				Content = "Seconds between auto hops and wait after rejoining.",
 				Min = 1,
 				Max = 60,
@@ -30689,12 +30683,12 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 
 			local v4856 = t216.privateTab:AddSection("Find Private Server", true)
 			local v4857 = v4856:AddParagraph({
-				Title = "Current Server",
+				Title = "Current Server Status",
 				Content = "Checking..."
 			})
 
 			t216.privateServerMax = v4856:AddDropdown({
-				Title = "Max Players",
+				Title = "Maximum Players",
 				Content = "The most players you want in your server, you included. 2 (you + 1) is the easiest to find.",
 				Options = {
 					"1",
@@ -30708,7 +30702,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				Callback = v4732(v4532)
 			})
 			v4856:AddButton({
-				Title = "Hop Server Now",
+				Title = "Find a Quieter Server Now",
 				Content = "Moves you to a quieter server right away.",
 				Callback = v4732(function()
 					task.spawn(function()
@@ -30717,7 +30711,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			t216.privateServerAuto = v4856:AddToggle({
-				Title = "Auto Hop",
+				Title = "Auto Find a Quieter Server",
 				Content = "Keeps moving you to quieter servers until the player count is at or under your max.",
 				Default = false,
 				Callback = v4732(v4533)
@@ -30742,7 +30736,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local Roaming = v4851:AddSection("Roaming")
 
 			t216.waypoint = Roaming:AddDropdown({
-				Title = "Waypoint",
+				Title = "Teleport Destination",
 				Content = "Pick a place, then hit Teleport below.",
 				Options = t217,
 				Default = t217[1],
@@ -30751,7 +30745,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			Roaming:AddButton({
-				Title = "Teleport To Waypoint",
+				Title = "Teleport to Selected Destination",
 				Content = "Moves you straight to the waypoint you picked.",
 				Callback = v4732(function()
 					local __SenaV4Roaming = genv.__SenaV4Roaming
@@ -30762,7 +30756,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 					end
 
 					SenaLibOverride:Notify({
-						Title = "Waypoint",
+						Title = "Teleport Destination",
 						Content = v4862 and "Moved to " .. tostring(u4745) or "That waypoint is not in this server",
 						Duration = 3
 					})
@@ -30772,28 +30766,28 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local v4863 = v4851:AddSection("Run Once")
 
 			v4863:AddButton({
-				Title = "Place Everything Now",
+				Title = "Place Ready Eggs Once",
 				Content = "Runs one pass of Auto Place, even while the toggle is off.",
 				Callback = v4732(function()
 					runOnce("AutoPlace", t24.AutoPlaceLoop)
 				end)
 			})
 			v4863:AddButton({
-				Title = "Hatch Everything Ready",
+				Title = "Hatch Ready Eggs Once",
 				Content = "Runs one pass of Auto Hatch, even while the toggle is off.",
 				Callback = v4732(function()
 					runOnce("AutoHatch", t24.AutoHatchLoop)
 				end)
 			})
 			v4863:AddButton({
-				Title = "Sell Pets Now",
+				Title = "Sell Matching Pets Once",
 				Content = "Runs one pass of Auto Sell Pet using the filters above.",
 				Callback = v4732(function()
 					runOnce("AutoSell", t24.startAutoSellLoop)
 				end)
 			})
 			v4863:AddButton({
-				Title = "Sell Eggs Now",
+				Title = "Sell Matching Eggs Once",
 				Content = "Runs one pass of Auto Sell Egg using the filters above.",
 				Callback = v4732(function()
 					runOnce("AutoSellEgg", t24.startAutoSellEggLoop)
@@ -30803,19 +30797,19 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local Session = v4851:AddSection("Session")
 
 			t216.bottingMode = Session:AddToggle({
-				Title = "Botting Mode",
-				Content = "Turns off 3D rendering and covers the screen in black. Everything keeps running, your GPU does not.",
+				Title = "Low-Render Mode",
+				Content = "Turns off 3D rendering and dims the screen while enabled to reduce graphics work. Other script tasks keep running.",
 				Default = false,
 				Callback = v4732(v4561)
 			})
 			t216.antiCutscene = Session:AddToggle({
-				Title = "Anti Cutscene",
+				Title = "Skip Cutscenes",
 				Content = "Closes event cutscenes and the intro as soon as the game opens them, so nothing locks your camera.",
 				Default = false,
 				Callback = v4732(v4562)
 			})
 			Session:AddButton({
-				Title = "Rejoin This Server",
+				Title = "Rejoin Current Server",
 				Content = "Teleports you back into the exact server you are in now.",
 				Callback = v4732(function()
 					pcall(function()
@@ -30824,7 +30818,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			Session:AddButton({
-				Title = "Stop & Unload",
+				Title = "Stop Script and Close Hub",
 				Content = "Turns every loop off and closes the hub. Run the script again to bring it back.",
 				Callback = v4732(function()
 					for _, v in ipairs({
@@ -30867,19 +30861,19 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local Player = v4851:AddSection("Player")
 
 			t216.antiAfk = Player:AddToggle({
-				Title = "Anti AFK",
+				Title = "Prevent Idle Disconnect",
 				Content = "Blocks the game's idle kick while the script runs.",
 				Default = true,
 				Callback = v4732(v4727)
 			})
 			t216.autoReconnect = Player:AddToggle({
-				Title = "Auto Reconnect",
+				Title = "Reconnect After Disconnect",
 				Content = "Automatically reconnects you back to the server upon kick or disconnect.",
 				Default = true,
 				Callback = v4732(v4728)
 			})
 			t216.autoExecute = Player:AddToggle({
-				Title = "Auto Execute (Rejoin)",
+				Title = "Run Again After Rejoin",
 				Content = "Prepares the bootstrapper so the script runs automatically after teleport or reconnect.",
 				Default = false,
 				Callback = v4732(v4729)
@@ -30887,14 +30881,11 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 		end
 
 		do
-			local v4869 = v4742:AddTab({
-				Name = "Steal Players",
-				Icon = "swords"
-			})
-			local v4870 = v4869:AddSection("Auto Steal")
+			local v4869 = t216.mainTab
+			local v4870 = v4869:AddSection("Player Carriers")
 
 			t216.stealPlayers = v4870:AddToggle({
-				Title = "Auto Steal From Players",
+				Title = "Auto Target Egg Carriers",
 				Content = "Chases anyone carrying an egg in the field, bats them until the egg drops, grabs it and banks it. A carrier is only chased when the egg clears the filters below.",
 				Default = false,
 				Callback = v4732(v4734)
@@ -30908,7 +30899,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				Callback = v4732(v4735)
 			})
 			t216.stealPlayerValue = v4870:AddInput({
-				Title = "Minimum Value",
+				Title = "Minimum Carrier Egg Income",
 				Content = "Skip carriers holding less than this per second. Supports k, m and b.",
 				Placeholder = "e.g. 500k, 2m, 1b",
 				Default = "",
@@ -30922,13 +30913,13 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 
 			if v4871.AddActionList then
 				v4873 = v4871:AddActionList({
-					Title = "Players in this server",
+					Title = "Players in This Server",
 					EmptyText = "Nobody else is in this server.",
 					VisibleRows = 6,
 					ButtonWidth = 76
 				})
 				v4874 = v4872:AddActionList({
-					Title = "History of stolen eggs from players",
+					Title = "Egg Carrier History",
 					EmptyText = "No player steals yet.",
 					VisibleRows = 5,
 					ButtonWidth = 72
@@ -30941,7 +30932,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			end
 
 			v4872:AddButton({
-				Title = "Clear History",
+				Title = "Clear Carrier History",
 				Content = "Wipe the list above.",
 				Callback = v4732(function()
 					if __SenaV4PlayerSteal then
@@ -31007,10 +30998,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 
 		do
 			local __SenaV4Visual = genv.__SenaV4Visual
-			local v4885 = v4742:AddTab({
-				Name = "Visual",
-				Icon = "eye"
-			})
+			local v4885 = t216.miscTab
 			local t225 = {
 				rods = nil,
 				fish = nil
@@ -31046,8 +31034,8 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			v4890:AddSubSection("Rods")
 
 			local v4891 = v4890:AddDropdown({
-				Title = "Select Rod",
-				Content = "Rods and skins from Fish It. Loading list...",
+				Title = "Choose Rod",
+				Content = "Choose a rod model from the available Fish It list. The list loads when available.",
 				Options = {},
 				Multi = false,
 				Default = nil,
@@ -31057,15 +31045,15 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			})
 
 			v4890:AddButton({
-				Title = "Spawn Rod",
-				Content = "Downloads the rod and puts it in your backpack. Equip it like a bat. Only you can see it.",
+				Title = "Show Rod Model",
+				Content = "Adds a local rod model to your inventory. Equip it like a bat; only you can see the model.",
 				Callback = v4732(function()
 					v4889("rods")
 				end)
 			})
 			v4890:AddSlider({
 				Title = "Rod Size",
-				Content = "1 = the size it has in Fish It. Spawned rods update right away.",
+				Content = "1.0 matches the model’s normal size. Changes update existing spawned rods.",
 				Min = 0.5,
 				Max = 2,
 				Default = 1,
@@ -31082,8 +31070,8 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			v4890:AddSubSection("Fish")
 
 			local v4892 = v4890:AddDropdown({
-				Title = "Select Fish",
-				Content = "Secret and Forgotten fish from Fish It. Loading list...",
+				Title = "Choose Fish",
+				Content = "Choose a fish model from the available Fish It list. The list loads when available.",
 				Options = {},
 				Multi = false,
 				Default = nil,
@@ -31093,15 +31081,15 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			})
 
 			v4890:AddButton({
-				Title = "Spawn Fish",
-				Content = "Downloads the fish and puts it in your backpack under Pets. Only you can see it.",
+				Title = "Show Fish Model",
+				Content = "Adds a local fish model under Pets in your inventory. Only you can see the model.",
 				Callback = v4732(function()
 					v4889("fish")
 				end)
 			})
 			v4890:AddSlider({
-				Title = "Fish Weight",
-				Content = "0% = lightest catch, 100% = heaviest Big catch. Size follows Fish It: weight / min weight.",
+				Title = "Fish Weight Range",
+				Content = "0% uses the lightest weight and 100% uses the heaviest setting. The model size follows its weight setting.",
 				Min = 0,
 				Max = 100,
 				Default = 0,
@@ -31158,8 +31146,8 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 			local u4900 = Egg[1]
 
 			v4896:AddDropdown({
-				Title = "Type",
-				Content = "Egg shows in the Eggs tab, Pet under Pets. Both are fake and local-only.",
+				Title = "Visual Item Type",
+				Content = "Choose whether to create a local egg or pet model. These visuals are only shown to you.",
 				Options = {
 					"Egg",
 					"Pet"
@@ -31171,7 +31159,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			v4896:AddDropdown({
-				Title = "Select Egg / Pet",
+				Title = "Choose Egg or Pet",
 				Content = "Which egg or pet to spawn.",
 				Options = Egg,
 				Multi = false,
@@ -31182,7 +31170,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			v4896:AddSlider({
-				Title = "Size / Flex",
+				Title = "Size and Weight Multiplier",
 				Content = "Bigger = heavier Kg & higher value (Kg = base weight x scale^3) AND a bigger egg in your hand. 50 hits the billions.",
 				Min = 1,
 				Max = 100,
@@ -31193,8 +31181,8 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			v4896:AddButton({
-				Title = "Hold in Hand",
-				Content = "Spawns a model of it in your hand. Press again for more. (In-hand only - use the other button to also add it to All Items.)",
+				Title = "Spawn Model in Hand",
+				Content = "Creates the selected model in your hand. Press again to create another. This does not add it to your inventory list.",
 				Callback = v4732(function()
 					local __SenaV4VisualSAE = genv.__SenaV4VisualSAE
 
@@ -31204,8 +31192,8 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			v4896:AddButton({
-				Title = "Add to Backpack (Kg)",
-				Content = "Drops it in All Items (eggs) or Pets with a huge Kg for the inventory flex. Press again for more.",
+				Title = "Add to Inventory with Weight",
+				Content = "Adds a local model to the Eggs or Pets list with the selected weight value. Press again to add another.",
 				Callback = v4732(function()
 					local __SenaV4VisualSAE = genv.__SenaV4VisualSAE
 
@@ -31215,7 +31203,7 @@ Missing: %s]], __SenaV4ScrambleTradeIn.banner, __SenaV4ScrambleTradeIn.status, m
 				end)
 			})
 			v4896:AddButton({
-				Title = "Remove Egg / Pet Visuals",
+				Title = "Remove Spawned Egg and Pet Models",
 				Content = "Takes every spawned fake egg/pet and held model out.",
 				Callback = v4732(function()
 					local __SenaV4VisualSAE = genv.__SenaV4VisualSAE
