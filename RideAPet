@@ -2329,7 +2329,8 @@ task.spawn(function()
                 or localPlayer2:GetAttribute("VolcanoValidated") ~= true) then
               v35.Status = "Entering Volcano (Activating Scorching)..."
               f22(v201)
-              v201 = f12()
+              local _, v201n = f12()
+              v201 = v201n
             end
             if v201 then
               if v205 then
@@ -2338,7 +2339,8 @@ task.spawn(function()
                   v35.CurrentTween = nil
                 end
                 f37(v201)
-                v201 = f12()
+                local _, v201n2 = f12()
+                v201 = v201n2
                 if v201 then
                   v201.AssemblyLinearVelocity = Vector3.zero
                   v201.AssemblyAngularVelocity = Vector3.zero
@@ -2374,7 +2376,8 @@ task.spawn(function()
               task.wait(v208)
               local basket8 = localPlayer2:FindFirstChild("Basket")
                   and #localPlayer2.Basket:GetChildren() or 0
-              v201 = f12()
+              local _, v201n3 = f12()
+              v201 = v201n3
               if v201 then
                 v201.AssemblyLinearVelocity = Vector3.zero
                 v201.AssemblyAngularVelocity = Vector3.zero
@@ -2405,7 +2408,8 @@ task.spawn(function()
                 if not v202.Model or not v202.Model.Parent then v211 = true; break end
                 if os.clock() - v212 >= 0.3 then
                   v212 = os.clock()
-                  v201 = f12()
+                  local _, v201n4 = f12()
+                  v201 = v201n4
                   if v201 then
                     v201.AssemblyLinearVelocity = Vector3.zero
                     v201.AssemblyAngularVelocity = Vector3.zero
@@ -3410,6 +3414,20 @@ local Window = WindUI:CreateWindow({
 _G.OzionhubInstance = Window
 local v347 = Window
 
+if not v347.Notify then
+  v347.Notify = function(_, opts)
+    opts = opts or {}
+    pcall(function()
+      WindUI:Notify({
+        Title = opts.Title or "VeloxHub",
+        Content = opts.Content or "",
+        Duration = opts.Duration or 3,
+        Icon = opts.Icon or "info",
+      })
+    end)
+  end
+end
+
 local MainTab     = Window:Tab({ Title = "Main",      Icon = "egg" })
 local VisualTab   = Window:Tab({ Title = "Visual",    Icon = "eye" })
 local FeaturesTab = Window:Tab({ Title = "Features",  Icon = "layers" })
@@ -4069,9 +4087,9 @@ SettingsTab:Button({
     local invite = "https://discord.gg/duXxnUp4Vq"
     if setclipboard then
       setclipboard(invite)
-      v347:Notify({ Title = "Discord", Content = "Invite copied to clipboard!", Style = "Success", Duration = 3 })
+      v347:Notify({ Title = "Discord", Content = "Invite copied to clipboard!", Duration = 3, Icon = "check" })
     else
-      v347:Notify({ Title = "Discord", Content = "Copy this link: " .. invite, Style = "Info", Duration = 10 })
+      v347:Notify({ Title = "Discord", Content = "Copy this link: " .. invite, Duration = 10, Icon = "info" })
     end
   end,
 })
