@@ -28,35 +28,35 @@ pcall(function()
   end
 end)
 
-_G.OzionhubInstanceId = (_G.OzionhubInstanceId or 0) + 1
-local ozionhubInstanceId = _G.OzionhubInstanceId
+_G.VeloxHubInstanceId = (_G.VeloxHubInstanceId or 0) + 1
+local veloxHubInstanceId = _G.VeloxHubInstanceId
 
-if _G.OzionhubInstance and typeof(_G.OzionhubInstance) == "table" and _G.OzionhubInstance.Destroy then
-  pcall(function() _G.OzionhubInstance:Destroy() end)
+if _G.VeloxHubInstance and typeof(_G.VeloxHubInstance) == "table" and _G.VeloxHubInstance.Destroy then
+  pcall(function() _G.VeloxHubInstance:Destroy() end)
 end
 
-if _G.OzionhubConnections and type(_G.OzionhubConnections) == "table" then
-  for _, conn in ipairs(_G.OzionhubConnections) do
+if _G.VeloxHubConnections and type(_G.VeloxHubConnections) == "table" then
+  for _, conn in ipairs(_G.VeloxHubConnections) do
     pcall(function() conn:Disconnect() end)
   end
 end
 
-_G.OzionhubConnections = {}
+_G.VeloxHubConnections = {}
 
 pcall(function()
-  if gethui and gethui():FindFirstChild("Ozionhub_MobileToggle") then
-    gethui().Ozionhub_MobileToggle:Destroy()
+  if gethui and gethui():FindFirstChild("VeloxHub_MobileToggle") then
+    gethui().VeloxHub_MobileToggle:Destroy()
   end
-  if coreGui:FindFirstChild("Ozionhub_MobileToggle") then
-    coreGui.Ozionhub_MobileToggle:Destroy()
+  if coreGui:FindFirstChild("VeloxHub_MobileToggle") then
+    coreGui.VeloxHub_MobileToggle:Destroy()
   end
   if coreGui:FindFirstChild("AutoFarmCandyGUI") then
     coreGui.AutoFarmCandyGUI:Destroy()
   end
   local localPlayer = players.LocalPlayer
   if localPlayer and localPlayer:FindFirstChild("PlayerGui")
-    and localPlayer.PlayerGui:FindFirstChild("Ozionhub_MobileToggle") then
-    localPlayer.PlayerGui.Ozionhub_MobileToggle:Destroy()
+    and localPlayer.PlayerGui:FindFirstChild("VeloxHub_MobileToggle") then
+    localPlayer.PlayerGui.VeloxHub_MobileToggle:Destroy()
   end
   if localPlayer and localPlayer.Character then
     local humanoidRootPart = localPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -114,7 +114,7 @@ end)
 
 local v6 = getrenv and type(getrenv) == "function" and getrenv().require
 local v7 = getgenv and type(getgenv) == "function" and getgenv().require
-local crownMODULES = _G._OZION_MODULES or {}
+local crownMODULES = _G._VELOX_MODULES or {}
 
 local function f3(p5, p6, p7)
   if crownMODULES and crownMODULES[p6] then return crownMODULES[p6] end
@@ -253,7 +253,7 @@ end
 
 local function f7(p10)
   if not p10 or p10 == "" then return false end
-  local minMutationTier = _G.OzionhubState and _G.OzionhubState.MinMutationTier
+  local minMutationTier = _G.VeloxHubState and _G.VeloxHubState.MinMutationTier
     or "All Mutations (Shocked+)"
   local v29 = v23[p10] or 1
   if minMutationTier == "Eternal Only (100x)" then return v29 >= 100 end
@@ -268,11 +268,11 @@ local function f7(p10)
 end
 
 local function f8()
-  local cook45VolcanoPlatform = workspaceService:FindFirstChild("Crown_VolcanoPlatform")
+  local cook45VolcanoPlatform = workspaceService:FindFirstChild("Velox_VolcanoPlatform")
   local cframe3 = CFrame.new(cframe.Position - Vector3.new(0, 3.2, 0))
   if not cook45VolcanoPlatform then
     cook45VolcanoPlatform = Instance.new("Part")
-    cook45VolcanoPlatform.Name = "Crown_VolcanoPlatform"
+    cook45VolcanoPlatform.Name = "Velox_VolcanoPlatform"
     cook45VolcanoPlatform.Size = Vector3.new(14, 1, 14)
     cook45VolcanoPlatform.Anchored = true
     cook45VolcanoPlatform.CanCollide = true
@@ -322,120 +322,120 @@ local function f9(p11)
 end
 
 local g = _G
-g.OzionhubState = _G.OzionhubState or {}
-local ozionhubState = _G.OzionhubState
+g.VeloxHubState = _G.VeloxHubState or {}
+local veloxHubState = _G.VeloxHubState
 
-ozionhubState.AutoFarm = true
-ozionhubState.AutoRebirth = false
-ozionhubState.AutoMagmaDip = false
+veloxHubState.AutoFarm = true
+veloxHubState.AutoRebirth = false
+veloxHubState.AutoMagmaDip = false
 
-if ozionhubState.TweenSpeed == nil or ozionhubState.TweenSpeed == 300 then
-  ozionhubState.TweenSpeed = 1250
+if veloxHubState.TweenSpeed == nil or veloxHubState.TweenSpeed == 1250 then
+  veloxHubState.TweenSpeed = 50
 end
 
-ozionhubState.ReturnSpeed = nil
+veloxHubState.ReturnSpeed = nil
 
-if ozionhubState.StealApproach == nil then ozionhubState.StealApproach = "Over Map" end
-if ozionhubState.SyncDelay == nil then ozionhubState.SyncDelay = 0.35 end
-if ozionhubState.PostPickupDelay == nil then ozionhubState.PostPickupDelay = 0.15 end
-if ozionhubState.PriorityRarity == nil then ozionhubState.PriorityRarity = true end
-if ozionhubState.AutoDropUnwanted == nil then ozionhubState.AutoDropUnwanted = false end
-if ozionhubState.AutoReturnPlot == nil then ozionhubState.AutoReturnPlot = false end
+if veloxHubState.StealApproach == nil then veloxHubState.StealApproach = "Over Map" end
+if veloxHubState.SyncDelay == nil then veloxHubState.SyncDelay = 0.35 end
+if veloxHubState.PostPickupDelay == nil then veloxHubState.PostPickupDelay = 0.15 end
+if veloxHubState.PriorityRarity == nil then veloxHubState.PriorityRarity = true end
+if veloxHubState.AutoDropUnwanted == nil then veloxHubState.AutoDropUnwanted = false end
+if veloxHubState.AutoReturnPlot == nil then veloxHubState.AutoReturnPlot = false end
 
-ozionhubState.AutoPlaceNest = false
-ozionhubState.SpawnNest = false
-ozionhubState.AutoHatchPlot = false
+veloxHubState.AutoPlaceNest = false
+veloxHubState.SpawnNest = false
+veloxHubState.AutoHatchPlot = false
 
-if ozionhubState.AutoUnlockNests == nil then ozionhubState.AutoUnlockNests = false end
-if ozionhubState.AutoUpgradeLuck == nil then ozionhubState.AutoUpgradeLuck = false end
+if veloxHubState.AutoUnlockNests == nil then veloxHubState.AutoUnlockNests = false end
+if veloxHubState.AutoUpgradeLuck == nil then veloxHubState.AutoUpgradeLuck = false end
 
-ozionhubState.AutoFeedPets = false
+veloxHubState.AutoFeedPets = false
 
-if ozionhubState.FeedTargetMode == nil then ozionhubState.FeedTargetMode = "Smart Priority" end
-if ozionhubState.SelectedPetKey == nil then ozionhubState.SelectedPetKey = nil end
-if ozionhubState.FeedPriorityMode == nil then ozionhubState.FeedPriorityMode = "Smart Potential" end
-if ozionhubState.FeedSkipMaxAge == nil then ozionhubState.FeedSkipMaxAge = true end
-if ozionhubState.FeedAllowPremiumFood == nil then ozionhubState.FeedAllowPremiumFood = true end
-if ozionhubState.FeedFoodSelection == nil then ozionhubState.FeedFoodSelection = "All Foods" end
-if ozionhubState.FeedAllPets == nil then ozionhubState.FeedAllPets = true end
-if ozionhubState.FeedPetList == nil then ozionhubState.FeedPetList = {} end
-if ozionhubState.PrioritizeRebirthPet == nil then ozionhubState.PrioritizeRebirthPet = true end
-if ozionhubState.AutoRebirthWhenReady == nil then ozionhubState.AutoRebirthWhenReady = true end
+if veloxHubState.FeedTargetMode == nil then veloxHubState.FeedTargetMode = "Smart Priority" end
+if veloxHubState.SelectedPetKey == nil then veloxHubState.SelectedPetKey = nil end
+if veloxHubState.FeedPriorityMode == nil then veloxHubState.FeedPriorityMode = "Smart Potential" end
+if veloxHubState.FeedSkipMaxAge == nil then veloxHubState.FeedSkipMaxAge = true end
+if veloxHubState.FeedAllowPremiumFood == nil then veloxHubState.FeedAllowPremiumFood = true end
+if veloxHubState.FeedFoodSelection == nil then veloxHubState.FeedFoodSelection = "All Foods" end
+if veloxHubState.FeedAllPets == nil then veloxHubState.FeedAllPets = true end
+if veloxHubState.FeedPetList == nil then veloxHubState.FeedPetList = {} end
+if veloxHubState.PrioritizeRebirthPet == nil then veloxHubState.PrioritizeRebirthPet = true end
+if veloxHubState.AutoRebirthWhenReady == nil then veloxHubState.AutoRebirthWhenReady = true end
 
-if ozionhubState.AllowedRarities == nil then
-  ozionhubState.AllowedRarities = {
+if veloxHubState.AllowedRarities == nil then
+  veloxHubState.AllowedRarities = {
     Ethereal = true, Divine = true, Mythic = true, Legendary = true,
     Epic = true, Rare = false, Common = false,
   }
 end
 
-if ozionhubState.AutoFuse == nil then ozionhubState.AutoFuse = false end
-if ozionhubState.FuseProtectFavorited == nil then ozionhubState.FuseProtectFavorited = true end
-if ozionhubState.AutoFavoriteFuse == nil then ozionhubState.AutoFavoriteFuse = true end
+if veloxHubState.AutoFuse == nil then veloxHubState.AutoFuse = false end
+if veloxHubState.FuseProtectFavorited == nil then veloxHubState.FuseProtectFavorited = true end
+if veloxHubState.AutoFavoriteFuse == nil then veloxHubState.AutoFavoriteFuse = true end
 
-if ozionhubState.AutoFavoriteFuseList == nil then
-  ozionhubState.AutoFavoriteFuseList = {
+if veloxHubState.AutoFavoriteFuseList == nil then
+  veloxHubState.AutoFavoriteFuseList = {
     "Hydra Dragon ($165M/s - Val: $99B)", "Hellhound ($140M/s - Val: $84B)",
     "Fenrir ($120M/s - Val: $72B)", "Stone Golem ($60M/s - Val: $36B)",
     "El Toro ($20M/s - Val: $12B)",
   }
 end
 
-if ozionhubState.FuseRarities == nil then
-  ozionhubState.FuseRarities = {
+if veloxHubState.FuseRarities == nil then
+  veloxHubState.FuseRarities = {
     Legendary = true, Mythic = true, Divine = false, Ethereal = false,
   }
 end
 
-ozionhubState.ESP_Enabled = false
+veloxHubState.ESP_Enabled = false
 
-if ozionhubState.ESP_Highlights == nil then ozionhubState.ESP_Highlights = true end
-if ozionhubState.ESP_Billboards == nil then ozionhubState.ESP_Billboards = true end
-if ozionhubState.ESP_Tracers == nil then ozionhubState.ESP_Tracers = false end
-if ozionhubState.ESP_MaxDistance == nil then ozionhubState.ESP_MaxDistance = 5000 end
+if veloxHubState.ESP_Highlights == nil then veloxHubState.ESP_Highlights = true end
+if veloxHubState.ESP_Billboards == nil then veloxHubState.ESP_Billboards = true end
+if veloxHubState.ESP_Tracers == nil then veloxHubState.ESP_Tracers = false end
+if veloxHubState.ESP_MaxDistance == nil then veloxHubState.ESP_MaxDistance = 5000 end
 
 if MOBILE_MODE then
-  ozionhubState.SyncDelay = math.max(tonumber(ozionhubState.SyncDelay) or 0.35, 0.5)
-  ozionhubState.PostPickupDelay = math.max(tonumber(ozionhubState.PostPickupDelay) or 0.15, 0.35)
-  ozionhubState.ESP_MaxDistance = math.min(tonumber(ozionhubState.ESP_MaxDistance) or 5000, 1800)
-  ozionhubState.ESP_Enabled = false
-  ozionhubState.ESP_Tracers = false
-  ozionhubState.ESP_Billboards = false
+  veloxHubState.SyncDelay = math.max(tonumber(veloxHubState.SyncDelay) or 0.35, 0.5)
+  veloxHubState.PostPickupDelay = math.max(tonumber(veloxHubState.PostPickupDelay) or 0.15, 0.35)
+  veloxHubState.ESP_MaxDistance = math.min(tonumber(veloxHubState.ESP_MaxDistance) or 5000, 1800)
+  veloxHubState.ESP_Enabled = false
+  veloxHubState.ESP_Tracers = false
+  veloxHubState.ESP_Billboards = false
 end
 
-if ozionhubState.ESP_MinRarity == nil or ozionhubState.ESP_MinRarity == "Rare" then
-  ozionhubState.ESP_MinRarity = "Rare & Above"
+if veloxHubState.ESP_MinRarity == nil or veloxHubState.ESP_MinRarity == "Rare" then
+  veloxHubState.ESP_MinRarity = "Rare & Above"
 end
 
-if type(ozionhubState.ESP_MaxDistance) ~= "number" then
-  ozionhubState.ESP_MaxDistance = tonumber(ozionhubState.ESP_MaxDistance) or 5000
+if type(veloxHubState.ESP_MaxDistance) ~= "number" then
+  veloxHubState.ESP_MaxDistance = tonumber(veloxHubState.ESP_MaxDistance) or 5000
 end
 
-if ozionhubState.NoClip == nil then ozionhubState.NoClip = false end
-if ozionhubState.SpeedMultiplier == nil then ozionhubState.SpeedMultiplier = 1 end
-if ozionhubState.SpeedModEnabled == nil then ozionhubState.SpeedModEnabled = false end
-if ozionhubState.InfiniteJump == nil then ozionhubState.InfiniteJump = false end
-if ozionhubState.MinFarmRarity == nil then ozionhubState.MinFarmRarity = "Mythic & Above" end
-if ozionhubState.TargetSpecificEgg == nil then ozionhubState.TargetSpecificEgg = "Any Egg (Use Rarity Filter)" end
-if ozionhubState.FarmPriority == nil then ozionhubState.FarmPriority = "Highest Rarity First" end
+if veloxHubState.NoClip == nil then veloxHubState.NoClip = false end
+if veloxHubState.SpeedMultiplier == nil then veloxHubState.SpeedMultiplier = 1 end
+if veloxHubState.SpeedModEnabled == nil then veloxHubState.SpeedModEnabled = false end
+if veloxHubState.InfiniteJump == nil then veloxHubState.InfiniteJump = false end
+if veloxHubState.MinFarmRarity == nil then veloxHubState.MinFarmRarity = "Mythic & Above" end
+if veloxHubState.TargetSpecificEgg == nil then veloxHubState.TargetSpecificEgg = "Any Egg (Use Rarity Filter)" end
+if veloxHubState.FarmPriority == nil then veloxHubState.FarmPriority = "Highest Rarity First" end
 
-ozionhubState.ESP_VisualPreset = "Highlights + Floating Text"
-ozionhubState.ESP_Highlights = true
-ozionhubState.ESP_Billboards = true
-ozionhubState.ESP_Tracers = false
+veloxHubState.ESP_VisualPreset = "Highlights + Floating Text"
+veloxHubState.ESP_Highlights = true
+veloxHubState.ESP_Billboards = true
+veloxHubState.ESP_Tracers = false
 
-if ozionhubState.SpeedPreset == nil then ozionhubState.SpeedPreset = "Default (1x)" end
-if ozionhubState.MinEggWeight == nil then ozionhubState.MinEggWeight = 0 end
-if ozionhubState.PrioritizeHeaviest == nil then ozionhubState.PrioritizeHeaviest = false end
-if ozionhubState.WeatherEggWait == nil then ozionhubState.WeatherEggWait = false end
-if ozionhubState.PrioritizeMutations == nil then ozionhubState.PrioritizeMutations = true end
-if ozionhubState.MinMutationTier == nil then ozionhubState.MinMutationTier = "All Mutations (Shocked+)" end
-if ozionhubState.WeatherNotify == nil then ozionhubState.WeatherNotify = true end
-if ozionhubState.BestPetsStrategy == nil then ozionhubState.BestPetsStrategy = "Smart Potential" end
-if ozionhubState.AutoPlaceBestPets == nil then ozionhubState.AutoPlaceBestPets = false end
+if veloxHubState.SpeedPreset == nil then veloxHubState.SpeedPreset = "Default (1x)" end
+if veloxHubState.MinEggWeight == nil then veloxHubState.MinEggWeight = 0 end
+if veloxHubState.PrioritizeHeaviest == nil then veloxHubState.PrioritizeHeaviest = false end
+if veloxHubState.WeatherEggWait == nil then veloxHubState.WeatherEggWait = false end
+if veloxHubState.PrioritizeMutations == nil then veloxHubState.PrioritizeMutations = true end
+if veloxHubState.MinMutationTier == nil then veloxHubState.MinMutationTier = "All Mutations (Shocked+)" end
+if veloxHubState.WeatherNotify == nil then veloxHubState.WeatherNotify = true end
+if veloxHubState.BestPetsStrategy == nil then veloxHubState.BestPetsStrategy = "Smart Potential" end
+if veloxHubState.AutoPlaceBestPets == nil then veloxHubState.AutoPlaceBestPets = false end
 
 local function f10(p12)
-  ozionhubState.MinFarmRarity = p12
+  veloxHubState.MinFarmRarity = p12
   local v32 = ({
     ["All Eggs"] = { Common = true, Rare = true, Epic = true, Legendary = true, Mythic = true, Divine = true, Ethereal = true },
     ["Rare & Above"] = { Common = false, Rare = true, Epic = true, Legendary = true, Mythic = true, Divine = true, Ethereal = true },
@@ -446,36 +446,36 @@ local function f10(p12)
     ["Ethereal Only"] = { Common = false, Rare = false, Epic = false, Legendary = false, Mythic = false, Divine = false, Ethereal = true },
   })[p12]
   if v32 then
-    for key, value8 in pairs(v32) do ozionhubState.AllowedRarities[key] = value8 end
+    for key, value8 in pairs(v32) do veloxHubState.AllowedRarities[key] = value8 end
   end
 end
 
 local function f11(p13)
-  ozionhubState.ESP_VisualPreset = p13
+  veloxHubState.ESP_VisualPreset = p13
   if p13 == "All Visuals (Highlight + Text + Tracer)" then
-    ozionhubState.ESP_Highlights = true
-    ozionhubState.ESP_Billboards = true
-    ozionhubState.ESP_Tracers = true
+    veloxHubState.ESP_Highlights = true
+    veloxHubState.ESP_Billboards = true
+    veloxHubState.ESP_Tracers = true
   elseif p13 == "Highlights + Floating Text" then
-    ozionhubState.ESP_Highlights = true
-    ozionhubState.ESP_Billboards = true
-    ozionhubState.ESP_Tracers = false
+    veloxHubState.ESP_Highlights = true
+    veloxHubState.ESP_Billboards = true
+    veloxHubState.ESP_Tracers = false
   elseif p13 == "Floating Text Only (Clean)" then
-    ozionhubState.ESP_Highlights = false
-    ozionhubState.ESP_Billboards = true
-    ozionhubState.ESP_Tracers = false
+    veloxHubState.ESP_Highlights = false
+    veloxHubState.ESP_Billboards = true
+    veloxHubState.ESP_Tracers = false
   elseif p13 == "Highlights Only (Minimal)" then
-    ozionhubState.ESP_Highlights = true
-    ozionhubState.ESP_Billboards = false
-    ozionhubState.ESP_Tracers = false
+    veloxHubState.ESP_Highlights = true
+    veloxHubState.ESP_Billboards = false
+    veloxHubState.ESP_Tracers = false
   elseif p13 == "Tracers Only" then
-    ozionhubState.ESP_Highlights = false
-    ozionhubState.ESP_Billboards = false
-    ozionhubState.ESP_Tracers = true
+    veloxHubState.ESP_Highlights = false
+    veloxHubState.ESP_Billboards = false
+    veloxHubState.ESP_Tracers = true
   end
 end
 
-ozionhubState.FarmMode = "Instant"
+veloxHubState.FarmMode = "Smooth"
 
 local values = {
   "Any Egg (Use Rarity Filter)", "Volcanic Egg [Ethereal]", "Cherub Egg [Ethereal]",
@@ -574,7 +574,7 @@ local function f16(p14)
     waitForChild:SetStateEnabled(Enum.HumanoidStateType.GettingUp, true)
   end)
   waitForChild.StateChanged:Connect(function(p15, p16)
-    if _G.OzionhubInstanceId ~= ozionhubInstanceId then return end
+    if _G.VeloxHubInstanceId ~= veloxHubInstanceId then return end
     if p16 == Enum.HumanoidStateType.Ragdoll or p16 == Enum.HumanoidStateType.Physics
       or p16 == Enum.HumanoidStateType.FallingDown then
       pcall(function()
@@ -606,7 +606,7 @@ pcall(function()
   local reRagdoll = net and net:FindFirstChild("RE/Ragdoll")
   if reRagdoll and reRagdoll:IsA("RemoteEvent") then
     reRagdoll.OnClientEvent:Connect(function(p17, p18)
-      if _G.OzionhubInstanceId ~= ozionhubInstanceId then return end
+      if _G.VeloxHubInstanceId ~= veloxHubInstanceId then return end
       if p17 then
         task.defer(function()
           local _, v39, v40 = f12()
@@ -633,23 +633,23 @@ local function f17(p19)
     local v42 = value13
     for _, value14 in ipairs(v42:GetDescendants()) do
       local v43 = value14
-      if v43:IsA("BasePart") and v43.Name ~= "Crown_NestAnchor" then
+      if v43:IsA("BasePart") and v43.Name ~= "Velox_NestAnchor" then
         v43.LocalTransparencyModifier = p19 and 0 or 1
         if not v43:GetAttribute("NestWatched") then
           v43:SetAttribute("NestWatched", true)
           v43:GetPropertyChangedSignal("LocalTransparencyModifier"):Connect(function()
-            if ozionhubState.SpawnNest and v43.LocalTransparencyModifier ~= 0 then
+            if veloxHubState.SpawnNest and v43.LocalTransparencyModifier ~= 0 then
               v43.LocalTransparencyModifier = 0
             end
           end)
         end
       end
     end
-    local cook45NestAnchor = v42:FindFirstChild("Crown_NestAnchor")
+    local cook45NestAnchor = v42:FindFirstChild("Velox_NestAnchor")
     if p19 then
       if not cook45NestAnchor then
         cook45NestAnchor = Instance.new("Part")
-        cook45NestAnchor.Name = "Crown_NestAnchor"
+        cook45NestAnchor.Name = "Velox_NestAnchor"
         cook45NestAnchor.Size = Vector3.new(2, 2, 2)
         cook45NestAnchor.CFrame = v42:GetPivot() * CFrame.new(0, 1.5, 0)
         cook45NestAnchor.Transparency = 1
@@ -1113,7 +1113,7 @@ local function f28()
 end
 
 runService.Stepped:Connect(function()
-  if ozionhubState.NoClip or v35.IsFarming or v35.CurrentTween ~= nil then
+  if veloxHubState.NoClip or v35.IsFarming or v35.CurrentTween ~= nil then
     local character5 = localPlayer2.Character
     if character5 then
       for _, value30 in ipairs(character5:GetDescendants()) do
@@ -1130,16 +1130,16 @@ runService.Stepped:Connect(function()
 end)
 
 userInputService.JumpRequest:Connect(function()
-  if ozionhubState.InfiniteJump then
+  if veloxHubState.InfiniteJump then
     local _, _, v98 = f12()
     if v98 then v98:ChangeState(Enum.HumanoidStateType.Jumping) end
   end
 end)
 
 runService.RenderStepped:Connect(function()
-  if ozionhubState.SpeedModEnabled and ozionhubState.SpeedMultiplier > 1 then
+  if veloxHubState.SpeedModEnabled and veloxHubState.SpeedMultiplier > 1 then
     local _, _, v101 = f12()
-    if v101 then v101.WalkSpeed = 92 * ozionhubState.SpeedMultiplier end
+    if v101 then v101.WalkSpeed = 92 * veloxHubState.SpeedMultiplier end
   end
 end)
 
@@ -1159,9 +1159,9 @@ local function f29(p31)
     v102[p31] = nil
   end
   if p31 and p31.Parent then
-    local crownEggESP2 = p31:FindFirstChild("CrownEggESP")
+    local crownEggESP2 = p31:FindFirstChild("VeloxEggESP")
     if crownEggESP2 then pcall(function() crownEggESP2:Destroy() end) end
-    local crownEggTag2 = p31:FindFirstChild("CrownEggTag")
+    local crownEggTag2 = p31:FindFirstChild("VeloxEggTag")
     if crownEggTag2 then pcall(function() crownEggTag2:Destroy() end) end
   end
 end
@@ -1171,9 +1171,9 @@ local function f30()
   local renderedEggs2 = workspaceService:FindFirstChild("RenderedEggs")
   if renderedEggs2 then
     for _, value32 in ipairs(renderedEggs2:GetChildren()) do
-      local crownEggESP3 = value32:FindFirstChild("CrownEggESP")
+      local crownEggESP3 = value32:FindFirstChild("VeloxEggESP")
       if crownEggESP3 then pcall(function() crownEggESP3:Destroy() end) end
-      local crownEggTag3 = value32:FindFirstChild("CrownEggTag")
+      local crownEggTag3 = value32:FindFirstChild("VeloxEggTag")
       if crownEggTag3 then pcall(function() crownEggTag3:Destroy() end) end
     end
   end
@@ -1221,7 +1221,7 @@ do
   local HIGHLIGHT_LIMIT = 22
 
   local function espMinWeight()
-    local setting = tostring(ozionhubState.ESP_MinRarity or "All Eggs")
+    local setting = tostring(veloxHubState.ESP_MinRarity or "All Eggs")
     local word = setting:match("^(%a+)")
     if not word or word == "All" then return 0 end
     return v20[word] or 0
@@ -1248,7 +1248,7 @@ do
     local anchor = espAnchor(model)
     if not anchor then return nil end
     local gui = Instance.new("BillboardGui")
-    gui.Name = "CrownEggTag"
+    gui.Name = "VeloxEggTag"
     gui.Adornee = anchor
     gui.AlwaysOnTop = true
     gui.Size = UDim2.fromOffset(340, 42)
@@ -1315,11 +1315,11 @@ do
 
   task.spawn(function()
     local warned = false
-    while not (_G.OzionhubInstanceId ~= ozionhubInstanceId) do
+    while not (_G.VeloxHubInstanceId ~= veloxHubInstanceId) do
       task.wait(MOBILE_MODE and 0.6 or 0.2)
       local ok, err = pcall(function()
         local folder = workspaceService:FindFirstChild("RenderedEggs")
-        if MOBILE_MODE or not ozionhubState.ESP_Enabled or not folder then
+        if MOBILE_MODE or not veloxHubState.ESP_Enabled or not folder then
           espHideAll()
           return
         end
@@ -1327,11 +1327,11 @@ do
         local camera = workspaceService.CurrentCamera
         local origin = root and root.Position or (camera and camera.CFrame.Position)
         if not origin then return end
-        local maxDist = tonumber(ozionhubState.ESP_MaxDistance) or 5000
+        local maxDist = tonumber(veloxHubState.ESP_MaxDistance) or 5000
         local minWeight = espMinWeight()
-        local wantHighlight = ozionhubState.ESP_Highlights == true
-        local wantBillboard = ozionhubState.ESP_Billboards == true
-        local wantTracer = ozionhubState.ESP_Tracers == true
+        local wantHighlight = veloxHubState.ESP_Highlights == true
+        local wantBillboard = veloxHubState.ESP_Billboards == true
+        local wantTracer = veloxHubState.ESP_Tracers == true
         local candidates = {}
         for _, egg in ipairs(folder:GetChildren()) do
           local okPos, pos = pcall(function() return egg:GetPivot().Position end)
@@ -1361,10 +1361,10 @@ do
           entry.Color = color
           if wantHighlight and index <= HIGHLIGHT_LIMIT then
             if not (entry.Highlight and entry.Highlight.Parent) then
-              local old = egg:FindFirstChild("CrownEggESP")
+              local old = egg:FindFirstChild("VeloxEggESP")
               if old then pcall(function() old:Destroy() end) end
               local highlight = Instance.new("Highlight")
-              highlight.Name = "CrownEggESP"
+              highlight.Name = "VeloxEggESP"
               highlight.Adornee = egg
               highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
               highlight.OutlineTransparency = 0
@@ -1415,7 +1415,7 @@ do
   end)
 
   local espFrame = runService.RenderStepped:Connect(function()
-    if _G.OzionhubInstanceId ~= ozionhubInstanceId or next(v102) == nil then return end
+    if _G.VeloxHubInstanceId ~= veloxHubInstanceId or next(v102) == nil then return end
     local camera = workspaceService.CurrentCamera
     if not camera then return end
     local viewport = camera.ViewportSize
@@ -1446,7 +1446,7 @@ do
     end
   end)
 
-  table.insert(_G.OzionhubConnections, espFrame)
+  table.insert(_G.VeloxHubConnections, espFrame)
 end
 
 local f32
@@ -1457,15 +1457,15 @@ local function f33()
   local _, v114 = f12()
   if not v114 then return nil end
   local gsub
-  if ozionhubState.TargetSpecificEgg
-    and ozionhubState.TargetSpecificEgg ~= "Any Egg (Use Rarity Filter)" then
-    gsub = ozionhubState.TargetSpecificEgg:gsub("%s*%[.-%]", "")
+  if veloxHubState.TargetSpecificEgg
+    and veloxHubState.TargetSpecificEgg ~= "Any Egg (Use Rarity Filter)" then
+    gsub = veloxHubState.TargetSpecificEgg:gsub("%s*%[.-%]", "")
   end
   local function f34(p33, p34)
     if gsub and gsub ~= "" then return p33 == gsub end
-    return ozionhubState.AllowedRarities and ozionhubState.AllowedRarities[p34] == true
+    return veloxHubState.AllowedRarities and veloxHubState.AllowedRarities[p34] == true
   end
-  if ozionhubState.AutoFarm and ozionhubState.PrioritizeMutations then
+  if veloxHubState.AutoFarm and veloxHubState.PrioritizeMutations then
     local v115 = {}
     for _, value36 in ipairs(renderedEggs4:GetChildren()) do
       local name2 = value36.Name
@@ -1477,8 +1477,8 @@ local function f33()
           if v118 then
             local v119 = f31(value36)
             local v120 = true
-            if ozionhubState.MinEggWeight and ozionhubState.MinEggWeight > 0 and v119 > 0
-              and v119 < ozionhubState.MinEggWeight then v120 = false end
+            if veloxHubState.MinEggWeight and veloxHubState.MinEggWeight > 0 and v119 > 0
+              and v119 < veloxHubState.MinEggWeight then v120 = false end
             if v120 then
               local getPivot = value36:GetPivot()
               table.insert(v115, {
@@ -1497,7 +1497,7 @@ local function f33()
         if p35.MutationWeight ~= p36.MutationWeight then return p35.MutationWeight > p36.MutationWeight
         elseif p35.Weight ~= p36.Weight then return p35.Weight > p36.Weight
         else
-          if ozionhubState.PrioritizeHeaviest
+          if veloxHubState.PrioritizeHeaviest
             and math.abs(p35.EggWeight - p36.EggWeight) > 0.05 then
             return p35.EggWeight > p36.EggWeight
           end
@@ -1507,7 +1507,7 @@ local function f33()
       return v115[1]
     end
   end
-  if ozionhubState.AutoFarm and ozionhubState.WeatherEggWait then
+  if veloxHubState.AutoFarm and veloxHubState.WeatherEggWait then
     local v121 = f6()
     if v121 and v121.Variant then
       local v122 = v26[v121.Variant]
@@ -1530,10 +1530,10 @@ local function f33()
       end
     end
   end
-  local allowedRarities = ozionhubState.AllowedRarities
-  local v125 = allowedRarities and ozionhubState.AllowedRarities.Ethereal == true
+  local allowedRarities = veloxHubState.AllowedRarities
+  local v125 = allowedRarities and veloxHubState.AllowedRarities.Ethereal == true
   local v126 = v125 or gsub and f4(gsub) == "Ethereal"
-  if ozionhubState.AutoFarm and v126 then
+  if veloxHubState.AutoFarm and v126 then
     local v127 = {}
     for _, value38 in ipairs(renderedEggs4:GetChildren()) do
       local name4 = value38.Name
@@ -1543,8 +1543,8 @@ local function f33()
         if v129 then
           local v130 = f31(value38)
           local v131 = true
-          if ozionhubState.MinEggWeight and ozionhubState.MinEggWeight > 0 and v130 > 0
-            and v130 < ozionhubState.MinEggWeight then v131 = false end
+          if veloxHubState.MinEggWeight and veloxHubState.MinEggWeight > 0 and v130 > 0
+            and v130 < veloxHubState.MinEggWeight then v131 = false end
           if v131 then
             local getPivot2 = value38:GetPivot()
             table.insert(v127, {
@@ -1557,7 +1557,7 @@ local function f33()
       end
     end
     if #v127 > 0 then
-      if ozionhubState.PrioritizeHeaviest then
+      if veloxHubState.PrioritizeHeaviest then
         table.sort(v127, function(p37, p38)
           if math.abs(p37.EggWeight - p38.EggWeight) > 0.05 then return p37.EggWeight > p38.EggWeight end
           return p37.Distance < p38.Distance
@@ -1568,7 +1568,7 @@ local function f33()
       return v127[1]
     end
   end
-  if ozionhubState.AutoRebirth and ozionhubState.PrioritizeRebirthPet then
+  if veloxHubState.AutoRebirth and veloxHubState.PrioritizeRebirthPet then
     local v132 = f27()
     if v132 and not v132.isMaxCap and not v132.hasPet and v132.reqPet and v132.reqPet ~= "" then
       if not v132.isIncubating then
@@ -1607,7 +1607,7 @@ local function f33()
       end
     end
   end
-  if not ozionhubState.AutoFarm then return nil end
+  if not veloxHubState.AutoFarm then return nil end
   local v140 = {}
   for _, value40 in ipairs(renderedEggs4:GetChildren()) do
     local name6 = value40.Name
@@ -1617,8 +1617,8 @@ local function f33()
       if v142 then
         local v143 = f31(value40)
         local v144 = true
-        if ozionhubState.MinEggWeight and ozionhubState.MinEggWeight > 0 and v143 > 0
-          and v143 < ozionhubState.MinEggWeight then v144 = false end
+        if veloxHubState.MinEggWeight and veloxHubState.MinEggWeight > 0 and v143 > 0
+          and v143 < veloxHubState.MinEggWeight then v144 = false end
         if v144 then
           local getPivot4 = value40:GetPivot()
           local luck = f5(name6)
@@ -1632,9 +1632,9 @@ local function f33()
     end
   end
   if #v140 == 0 then return nil end
-  local farmPriority = ozionhubState.FarmPriority
+  local farmPriority = veloxHubState.FarmPriority
   local priorityRarity = farmPriority
-    or (ozionhubState.PriorityRarity and "Highest Rarity First" or "Closest Distance First")
+    or (veloxHubState.PriorityRarity and "Highest Rarity First" or "Closest Distance First")
   if priorityRarity == "Heaviest Weight First" then
     table.sort(v140, function(p43, p44)
       if math.abs(p43.EggWeight - p44.EggWeight) > 0.05 then return p43.EggWeight > p44.EggWeight end
@@ -1644,14 +1644,14 @@ local function f33()
   elseif priorityRarity == "Highest Rarity First" then
     table.sort(v140, function(p45, p46)
       if p45.Weight ~= p46.Weight then return p45.Weight > p46.Weight end
-      if ozionhubState.PrioritizeHeaviest and math.abs(p45.EggWeight - p46.EggWeight) > 0.05 then
+      if veloxHubState.PrioritizeHeaviest and math.abs(p45.EggWeight - p46.EggWeight) > 0.05 then
         return p45.EggWeight > p46.EggWeight
       end
       return p45.Distance < p46.Distance
     end)
   elseif priorityRarity == "Closest Distance First" then
     table.sort(v140, function(p47, p48)
-      if ozionhubState.PrioritizeHeaviest and math.abs(p47.EggWeight - p48.EggWeight) > 0.05 then
+      if veloxHubState.PrioritizeHeaviest and math.abs(p47.EggWeight - p48.EggWeight) > 0.05 then
         return p47.EggWeight > p48.EggWeight
       end
       if p47.Distance ~= p48.Distance then return p47.Distance < p48.Distance end
@@ -1660,7 +1660,7 @@ local function f33()
   elseif priorityRarity == "Highest Luck First" then
     table.sort(v140, function(p49, p50)
       if p49.Luck ~= p50.Luck then return p49.Luck > p50.Luck end
-      if ozionhubState.PrioritizeHeaviest and math.abs(p49.EggWeight - p50.EggWeight) > 0.05 then
+      if veloxHubState.PrioritizeHeaviest and math.abs(p49.EggWeight - p50.EggWeight) > 0.05 then
         return p49.EggWeight > p50.EggWeight
       end
       return p49.Distance < p50.Distance
@@ -1718,12 +1718,12 @@ local skyMove = {}
 
 do
   local CRUISE_HEIGHT = 45
-  local OVER_HEIGHT = 250
+  local OVER_HEIGHT = 220
   local VOID_DEPTH = 110
   local savedCollide = {}
 
   local function currentSpeed()
-    return math.clamp(tonumber(ozionhubState.TweenSpeed) or 1250, 20, 10000)
+    return math.clamp(tonumber(veloxHubState.TweenSpeed) or 50, 20, 500)
   end
 
   local function root()
@@ -1749,6 +1749,24 @@ do
     if not on then table.clear(savedCollide) end
   end
 
+  local function route(from, to, opts)
+    if Vector3.new(to.X - from.X, 0, to.Z - from.Z).Magnitude < 80 and math.abs(to.Y - from.Y) < 30 then
+      return { to }
+    end
+    if opts and opts.Void then
+      local voidY = math.min(from.Y, to.Y) - VOID_DEPTH
+      voidY = math.max(voidY, workspaceService.FallenPartsDestroyHeight + 60)
+      return {
+        Vector3.new(from.X, voidY, from.Z),
+        Vector3.new(to.X, voidY, to.Z),
+        to,
+      }
+    end
+    local cruise = (opts and opts.Over) and OVER_HEIGHT or CRUISE_HEIGHT
+    local y = math.max(from.Y, to.Y) + cruise
+    return { Vector3.new(from.X, y, from.Z), Vector3.new(to.X, y, to.Z), to }
+  end
+
   local function noclipConnection()
     return runService.Stepped:Connect(function()
       local character = localPlayer2.Character
@@ -1759,60 +1777,106 @@ do
     end)
   end
 
-  function skyMove.InstantFlyTo(target, cancelFn, arriveDist)
+  function skyMove.RouteOpts()
+    if veloxHubState.StealApproach == "Under Map" then return { Void = true }
+    elseif veloxHubState.StealApproach == "Over Map" then return { Over = true } end
+    return nil
+  end
+
+  function skyMove.FlyTo(target, cancelFn, arriveDist, opts)
     local hrp = root()
     if not hrp or typeof(target) ~= "Vector3" then return false end
-    local arrive = arriveDist or 3
+    local arrive = arriveDist or 4
     if (hrp.Position - target).Magnitude <= arrive then return true end
-    if cancelFn and cancelFn() then return false end
-    if v35.CurrentTween then
-      pcall(function() v35.CurrentTween:Cancel() end)
-      v35.CurrentTween = nil
-    end
+    local startPosition = hrp.Position
+    local waypoints = route(hrp.Position, target, opts or skyMove.RouteOpts())
+
+    local startedAt = os.clock()
+    local lastProgress = os.clock()
+    local bestMag = math.huge
+    local lastIndex = 1
+
+    local token = { Cancelled = false }
+    function token:Cancel() self.Cancelled = true end
+    v35.CurrentTween = token
+
     setNoclip(true)
     local noclipConn = noclipConnection()
-    local wasAnchored = hrp.Anchored
-    local function teleportTo(position)
-      local r = root()
-      if not r then return end
+    local index = 1
+    local arrived = false
+    local hardCap = 120
+
+    while os.clock() - startedAt < hardCap do
+      if token.Cancelled or (cancelFn and cancelFn()) then break end
+      local dt = runService.Heartbeat:Wait()
+      hrp = root()
+      if not hrp then break end
+
+      local isLast = index == #waypoints
+      local delta = waypoints[index] - hrp.Position
+      local mag = delta.Magnitude
+
+      if index ~= lastIndex then
+        lastIndex = index
+        bestMag = math.huge
+      end
+      if mag < bestMag - 0.5 then
+        bestMag = mag
+        lastProgress = os.clock()
+      end
+      if os.clock() - lastProgress > 6 then break end
+
+      if mag <= (isLast and arrive or 4) then
+        if isLast then
+          arrived = true
+          break
+        end
+        index = index + 1
+      else
+        local step = math.min(mag, currentSpeed() * dt)
+        local flat = Vector3.new(delta.X, 0, delta.Z)
+        local rotation = flat.Magnitude > 0.1 and CFrame.lookAt(Vector3.zero, flat.Unit) or hrp.CFrame.Rotation
+        local nextPosition = hrp.Position + delta.Unit * step
+
+        if step > 30 then
+          pcall(function()
+            if typeof(workspaceService.RequestStreamAroundAsync) == "function" then
+              workspaceService:RequestStreamAroundAsync(nextPosition, 16)
+            end
+          end)
+        end
+
+        pcall(function()
+          hrp.CFrame = CFrame.new(nextPosition) * rotation
+          hrp.AssemblyLinearVelocity = Vector3.zero
+          hrp.AssemblyAngularVelocity = Vector3.zero
+        end)
+      end
+    end
+
+    hrp = root()
+    if hrp and hrp.Position.Y < math.min(target.Y, startPosition.Y) - 40 then
+      local recoverTo = arrived and target or startPosition
       pcall(function()
-        r.Anchored = true
-        r.AssemblyLinearVelocity = Vector3.zero
-        r.AssemblyAngularVelocity = Vector3.zero
-        r.CFrame = CFrame.new(position)
+        hrp.CFrame = CFrame.new(recoverTo + Vector3.new(0, 5, 0))
       end)
+      hrp = root()
     end
-    teleportTo(target)
-    pcall(function()
-      if typeof(workspaceService.RequestStreamAroundAsync) == "function" then
-        workspaceService:RequestStreamAroundAsync(target, 16)
-      end
-    end)
-    for _ = 1, 5 do
-      if cancelFn and cancelFn() then break end
-      runService.Heartbeat:Wait()
-    end
-    local r = root()
-    if r and r.Position.Y < target.Y - 15 then
-      teleportTo(target)
-      runService.Heartbeat:Wait()
-      r = root()
-    end
-    pcall(function()
-      if r then
-        r.Anchored = wasAnchored
-        r.AssemblyLinearVelocity = Vector3.zero
-        r.AssemblyAngularVelocity = Vector3.zero
-      end
-    end)
+
     noclipConn:Disconnect()
     setNoclip(false)
-    if not r then return false end
-    return (r.Position - target).Magnitude <= arrive + 1
+    if v35.CurrentTween == token then v35.CurrentTween = nil end
+
+    hrp = root()
+    if hrp then
+      pcall(function() hrp.AssemblyLinearVelocity = Vector3.zero end)
+      if (hrp.Position - target).Magnitude <= arrive + 3 then return true end
+    end
+    return arrived
   end
 
   function skyMove.MoveTo(target, cancelFn, arriveDist, opts)
-    return skyMove.InstantFlyTo(target, cancelFn, arriveDist)
+    return skyMove.FlyTo(target, cancelFn, arriveDist, opts)
   end
 
   local function basketCount()
@@ -1907,8 +1971,8 @@ do
 
   function skyMove.DeliverHome(baseplate, target, pickupPos, reason)
     local cancelFn = function()
-      return not (ozionhubState.AutoFarm
-        or (ozionhubState.AutoRebirth and ozionhubState.PrioritizeRebirthPet))
+      return not (veloxHubState.AutoFarm
+        or (veloxHubState.AutoRebirth and veloxHubState.PrioritizeRebirthPet))
     end
     local hrp = root()
     if not hrp then return end
@@ -1979,7 +2043,7 @@ local function f40(p62)
   f23(v156, v157)
   local v161, v162, v163 = f12()
   if not v162 or not v163 then return end
-  if ozionhubState.AutoMagmaDip and not v35.IsMagmaDipping and p62 ~= "Return to Plot" then
+  if veloxHubState.AutoMagmaDip and not v35.IsMagmaDipping and p62 ~= "Return to Plot" then
     v35.IsMagmaDipping = true
     f39(p62)
     v35.IsMagmaDipping = false
@@ -2013,7 +2077,7 @@ local function f40(p62)
     end
     task.wait(0.05)
   end
-  if ozionhubState.AutoHatchPlot then
+  if veloxHubState.AutoHatchPlot then
     local eggs4 = v158:FindFirstChild("Eggs")
     if eggs4 then
       for _, value42 in ipairs(eggs4:GetChildren()) do
@@ -2053,13 +2117,13 @@ local function f40(p62)
       end
     end)
   end
-  if ozionhubState.AutoPlaceNest then
-    local spawnNest = ozionhubState.SpawnNest and 15 or 10
+  if veloxHubState.AutoPlaceNest then
+    local spawnNest = veloxHubState.SpawnNest and 15 or 10
     local v174 = f14()
     if v174 < spawnNest then
       local v175 = v174 - f15()
       local v176 = 0
-      if ozionhubState.SpawnNest then
+      if veloxHubState.SpawnNest then
         local nests4 = v158:FindFirstChild("Nests")
         if nests4 then
           for _, value46 in ipairs(nests4:GetChildren()) do
@@ -2089,7 +2153,7 @@ local function f40(p62)
           if v178 >= spawnNest then break
           else
             local v180 = false
-            if ozionhubState.SpawnNest and v176 > 0 then
+            if veloxHubState.SpawnNest and v176 > 0 then
               local nests5 = v158:FindFirstChild("Nests")
               if nests5 then
                 for _, value50 in ipairs(nests5:GetChildren()) do
@@ -2147,7 +2211,7 @@ local function f40(p62)
       end
     end
   end
-  if ozionhubState.AutoUnlockNests and localPlayer2:GetAttribute("NoNest") ~= true then
+  if veloxHubState.AutoUnlockNests and localPlayer2:GetAttribute("NoNest") ~= true then
     local nests6 = v158:FindFirstChild("Nests")
     if nests6 then
       for _, value51 in ipairs(nests6:GetChildren()) do
@@ -2169,7 +2233,7 @@ end
 
 function f39(p63)
   local v188
-  if not ozionhubState.AutoMagmaDip then return false end
+  if not veloxHubState.AutoMagmaDip then return false end
   local basket4 = localPlayer2:FindFirstChild("Basket")
   if not basket4 or #basket4:GetChildren() == 0 then return false end
   local v189, v190, v191 = f12()
@@ -2238,7 +2302,7 @@ function f39(p63)
     end
   end
   local v194 = os.clock()
-  local magmaDipDuration = ozionhubState.MagmaDipDuration or 9.5
+  local magmaDipDuration = veloxHubState.MagmaDipDuration or 9.5
   while os.clock() - v194 < magmaDipDuration do
     if not v188.Parent then break
     else
@@ -2277,12 +2341,12 @@ function f39(p63)
 end
 
 task.spawn(function()
-  while not (_G.OzionhubInstanceId ~= ozionhubInstanceId) do
+  while not (_G.VeloxHubInstanceId ~= veloxHubInstanceId) do
     task.wait(MOBILE_MODE and 0.25 or 0.1)
-    local autoRebirth = ozionhubState.AutoRebirth and f27() or nil
+    local autoRebirth = veloxHubState.AutoRebirth and f27() or nil
     local v199 = autoRebirth and not autoRebirth.isMaxCap and not autoRebirth.hasPet
       and not autoRebirth.isIncubating and autoRebirth.reqPet ~= ""
-    if ozionhubState.AutoFarm or v199 then
+    if veloxHubState.AutoFarm or v199 then
       local v200, v201 = f12()
       if MOBILE_MODE then task.wait(0.2) end
       if v200 and v201 then
@@ -2372,7 +2436,7 @@ task.spawn(function()
               end
             end
             if v204 then
-              local v208 = math.clamp(ozionhubState.SyncDelay, 0.25, 0.6)
+              local v208 = math.clamp(veloxHubState.SyncDelay, 0.25, 0.6)
               task.wait(v208)
               local basket8 = localPlayer2:FindFirstChild("Basket")
                   and #localPlayer2.Basket:GetChildren() or 0
@@ -2395,7 +2459,7 @@ task.spawn(function()
                 v35.Status = "Collecting " .. v202.Name
                 f36(v202.Model, v202.Prompt)
               end
-              local v209 = math.clamp(ozionhubState.PostPickupDelay + 1.8, 1.8, 3)
+              local v209 = math.clamp(veloxHubState.PostPickupDelay + 1.8, 1.8, 3)
               local v210 = os.clock()
               local v211 = false
               local v212 = os.clock()
@@ -2441,7 +2505,7 @@ task.spawn(function()
             end
             v35.Target = "None"
             v35.TargetWeight = 0
-            if ozionhubState.AutoReturnPlot then
+            if veloxHubState.AutoReturnPlot then
               local v213 = f13()
               local baseplate2 = v213 and v213:FindFirstChild("Baseplate")
               if baseplate2 and (baseplate2.Position - v201.Position).Magnitude > 25 then
@@ -2458,7 +2522,7 @@ task.spawn(function()
         pcall(function() v35.CurrentTween:Cancel() end)
         v35.CurrentTween = nil
       end
-      if ozionhubState.AutoRebirth and autoRebirth and not autoRebirth.isMaxCap then
+      if veloxHubState.AutoRebirth and autoRebirth and not autoRebirth.isMaxCap then
         if autoRebirth.hasPet then
           v35.Status = string.format("Pet Owned (%s) - Waiting for Cash...", autoRebirth.reqPet)
         elseif autoRebirth.isIncubating then
@@ -2478,9 +2542,9 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-  while not (_G.OzionhubInstanceId ~= ozionhubInstanceId) do
+  while not (_G.VeloxHubInstanceId ~= veloxHubInstanceId) do
     task.wait(MOBILE_MODE and 0.6 or 0.25)
-    if ozionhubState.AutoHatchPlot then
+    if veloxHubState.AutoHatchPlot then
       pcall(function()
         local plotEggsTracker3 = localPlayer2:FindFirstChild("PlayerGui")
           and localPlayer2.PlayerGui:FindFirstChild("Main")
@@ -2545,9 +2609,9 @@ end)
 
 task.spawn(function()
   local lastMissingNotify = 0
-  while not (_G.OzionhubInstanceId ~= ozionhubInstanceId) do
+  while not (_G.VeloxHubInstanceId ~= veloxHubInstanceId) do
     task.wait(MOBILE_MODE and 2 or 1)
-    if ozionhubState.AutoRebirth and ozionhubState.AutoRebirthWhenReady then
+    if veloxHubState.AutoRebirth and veloxHubState.AutoRebirthWhenReady then
       pcall(function()
         local v216 = f27()
         if v216.canRebirth and not v216.isMaxCap then
@@ -2584,9 +2648,9 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-  while not (_G.OzionhubInstanceId ~= ozionhubInstanceId) do
+  while not (_G.VeloxHubInstanceId ~= veloxHubInstanceId) do
     task.wait(0.5)
-    if ozionhubState.AutoPlaceNest and not v35.CurrentTween then
+    if veloxHubState.AutoPlaceNest and not v35.CurrentTween then
       pcall(function()
         local v217 = f13()
         local baseplate3 = v217 and v217:FindFirstChild("Baseplate")
@@ -2594,7 +2658,7 @@ task.spawn(function()
         if not v217 or not baseplate3 or not v220 or not v219 then return
         elseif (v219.Position - baseplate3.Position).Magnitude > 85 then return
         else
-          local spawnNest2 = ozionhubState.SpawnNest and 15 or 10
+          local spawnNest2 = veloxHubState.SpawnNest and 15 or 10
           if f14() >= spawnNest2 then return
           else
             local v221 = {}
@@ -2616,7 +2680,7 @@ task.spawn(function()
                 if v222 >= spawnNest2 then break
                 else
                   local v223 = false
-                  if ozionhubState.SpawnNest then
+                  if veloxHubState.SpawnNest then
                     local nests7 = v217:FindFirstChild("Nests")
                     if nests7 then
                       for _, value60 in ipairs(nests7:GetChildren()) do
@@ -2705,20 +2769,20 @@ local function f41(p64)
 end
 
 local function f42(p65)
-  if not ozionhubState.AutoFavoriteFuse then return false end
-  if not ozionhubState.AutoFavoriteFuseList or type(ozionhubState.AutoFavoriteFuseList) ~= "table" then
+  if not veloxHubState.AutoFavoriteFuse then return false end
+  if not veloxHubState.AutoFavoriteFuseList or type(veloxHubState.AutoFavoriteFuseList) ~= "table" then
     return false
   end
-  for _, value61 in ipairs(ozionhubState.AutoFavoriteFuseList) do
+  for _, value61 in ipairs(veloxHubState.AutoFavoriteFuseList) do
     if v230[value61] == p65 or string.find(value61, p65, 1, true) then return true end
   end
   return false
 end
 
 task.spawn(function()
-  while not (_G.OzionhubInstanceId ~= ozionhubInstanceId) do
+  while not (_G.VeloxHubInstanceId ~= veloxHubInstanceId) do
     task.wait(1.5)
-    if ozionhubState.AutoFavoriteFuse then
+    if veloxHubState.AutoFavoriteFuse then
       pcall(function()
         for _, value62 in ipairs(localPlayer2.Backpack:GetChildren()) do
           if value62:IsA("Tool") and value62:HasTag("Pet")
@@ -2731,7 +2795,7 @@ task.spawn(function()
         end
       end)
     end
-    if ozionhubState.AutoFuse then
+    if veloxHubState.AutoFuse then
       pcall(function()
         local v231, v232, v233 = f12()
         if not v231 or not v232 or not v233 then return end
@@ -2764,7 +2828,7 @@ task.spawn(function()
             local petKey3 = pet and pet:GetAttribute("PetKey")
             if petKey3 then
               fusionAction:FireServer("Claim", petKey3)
-              if ozionhubState.AutoFavoriteFuse then
+              if veloxHubState.AutoFavoriteFuse then
                 task.delay(0.5, function() f41(petKey3) end)
               end
             else
@@ -2819,8 +2883,8 @@ task.spawn(function()
                 local v244 = v242[string.match(petName2, "^(.-)%s*%[") or petName2] or v242[petName2]
                 local rarity = v244 and v244.Rarity or value63:GetAttribute("Rarity")
                 local v245 = value63:GetAttribute("Favorited") == true
-                if rarity and ozionhubState.FuseRarities and ozionhubState.FuseRarities[rarity] == true then
-                  if not (ozionhubState.FuseProtectFavorited and v245) then
+                if rarity and veloxHubState.FuseRarities and veloxHubState.FuseRarities[rarity] == true then
+                  if not (veloxHubState.FuseProtectFavorited and v245) then
                     table.insert(v243, value63)
                   end
                 end
@@ -2880,7 +2944,7 @@ end)
 task.spawn(function()
   while true do
     task.wait(0.5)
-    if ozionhubState.AutoUpgradeLuck then
+    if veloxHubState.AutoUpgradeLuck then
       pcall(function()
         local upgrades = replicatedStorage:FindFirstChild("Remotes", true)
           and replicatedStorage.Remotes:FindFirstChild("Game", true)
@@ -2899,7 +2963,7 @@ end)
 task.spawn(function()
   while true do
     task.wait(1)
-    if ozionhubState.AutoUnlockNests then
+    if veloxHubState.AutoUnlockNests then
       pcall(function()
         if localPlayer2:GetAttribute("NoNest") == true then return
         else
@@ -3020,7 +3084,7 @@ local function f43(p66)
       end
     end
     if #v263 == 0 then return false, "No pets found" end
-    local bestPetsStrategy = p66 or ozionhubState.BestPetsStrategy or "Smart Potential"
+    local bestPetsStrategy = p66 or veloxHubState.BestPetsStrategy or "Smart Potential"
     table.sort(v263, function(p67, p68)
       if bestPetsStrategy == "Current Cash/s" then
         if p67.CurIncome ~= p68.CurIncome then return p67.CurIncome > p68.CurIncome end
@@ -3090,9 +3154,9 @@ end
 task.spawn(function()
   while true do
     task.wait(10)
-    if _G.OzionhubInstanceId ~= ozionhubInstanceId then break
-    elseif ozionhubState.AutoPlaceBestPets then
-      pcall(function() f43(ozionhubState.BestPetsStrategy) end)
+    if _G.VeloxHubInstanceId ~= veloxHubInstanceId then break
+    elseif veloxHubState.AutoPlaceBestPets then
+      pcall(function() f43(veloxHubState.BestPetsStrategy) end)
     end
   end
 end)
@@ -3195,12 +3259,12 @@ local function f45(p70)
     end
     if #v307 == 0 then return false, "No placed pets found on plot" end
     local v324 = {}
-    if (ozionhubState.FeedTargetMode == "Selected Pet Only"
-        or ozionhubState.FeedTargetMode == nil)
-      and ozionhubState.SelectedPetKey then
+    if (veloxHubState.FeedTargetMode == "Selected Pet Only"
+        or veloxHubState.FeedTargetMode == nil)
+      and veloxHubState.SelectedPetKey then
       for _, value73 in ipairs(v307) do
-        if value73.PetKey == ozionhubState.SelectedPetKey then
-          if ozionhubState.FeedSkipMaxAge == false or value73.Age < v308 then
+        if value73.PetKey == veloxHubState.SelectedPetKey then
+          if veloxHubState.FeedSkipMaxAge == false or value73.Age < v308 then
             table.insert(v324, value73)
           end
           break
@@ -3210,11 +3274,11 @@ local function f45(p70)
     if #v324 == 0 then
       for _, value74 in ipairs(v307) do
         local v325 = true
-        if ozionhubState.FeedSkipMaxAge ~= false and value74.Age >= v308 then v325 = false end
-        if v325 and ozionhubState.FeedAllPets == false
-          and type(ozionhubState.FeedPetList) == "table" then
+        if veloxHubState.FeedSkipMaxAge ~= false and value74.Age >= v308 then v325 = false end
+        if v325 and veloxHubState.FeedAllPets == false
+          and type(veloxHubState.FeedPetList) == "table" then
           local v326 = false
-          for key11, value75 in pairs(ozionhubState.FeedPetList) do
+          for key11, value75 in pairs(veloxHubState.FeedPetList) do
             if type(key11) == "number"
                 and (value75 == value74.Name or value75 == value74.PetKey)
               or type(key11) == "string"
@@ -3228,11 +3292,11 @@ local function f45(p70)
         if v325 then table.insert(v324, value74) end
       end
       if #v324 == 0 then
-        return false, ozionhubState.FeedSkipMaxAge ~= false
+        return false, veloxHubState.FeedSkipMaxAge ~= false
             and "All placed pets are already max level (Age 100)"
           or "No matching pets selected"
       end
-      local feedTargetMode = ozionhubState.FeedTargetMode or ozionhubState.FeedPriorityMode or "Smart Priority"
+      local feedTargetMode = veloxHubState.FeedTargetMode or veloxHubState.FeedPriorityMode or "Smart Priority"
       table.sort(v324, function(p71, p72)
         if feedTargetMode == "Highest Max Income" then
           if p71.MaxIncome ~= p72.MaxIncome then return p71.MaxIncome > p72.MaxIncome end
@@ -3258,11 +3322,11 @@ local function f45(p70)
               if value77:HasTag("Food") or v300 and v300[value77.Name] ~= nil then
                 local v328 = v300 and v300[value77.Name] or {}
                 local v330 = v328.NoFeedAll == true or value77.Name == "Dragonfruit" or value77.Name == "Magic Apple"
-                local v331 = ozionhubState.FeedAllowPremiumFood ~= false
+                local v331 = veloxHubState.FeedAllowPremiumFood ~= false
                 local v332 = not (v330 and not v331)
-                if ozionhubState.FeedFoodSelection
-                  and ozionhubState.FeedFoodSelection ~= "All Foods"
-                  and value77.Name ~= ozionhubState.FeedFoodSelection then
+                if veloxHubState.FeedFoodSelection
+                  and veloxHubState.FeedFoodSelection ~= "All Foods"
+                  and value77.Name ~= veloxHubState.FeedFoodSelection then
                   v332 = false
                 end
                 local v333 = 1
@@ -3323,7 +3387,7 @@ local function f45(p70)
       if p70 then
         for _ = 1, 5 do
           local age = tonumber(v335.Model:GetAttribute("Age")) or v335.Age
-          if ozionhubState.FeedSkipMaxAge ~= false and age >= v308 then break
+          if veloxHubState.FeedSkipMaxAge ~= false and age >= v308 then break
           else
             local data3 = tool2:FindFirstChild("Data")
             if (data3 and data3:FindFirstChild("Amount") and tonumber(data3.Amount.Value) or 0) <= 0 then break end
@@ -3341,8 +3405,8 @@ local function f45(p70)
 end
 
 task.spawn(function()
-  while not (_G.OzionhubInstanceId ~= ozionhubInstanceId) do
-    if ozionhubState.AutoFeedPets and not v35.IsFarming then
+  while not (_G.VeloxHubInstanceId ~= veloxHubInstanceId) do
+    if veloxHubState.AutoFeedPets and not v35.IsFarming then
       pcall(function() f45(false) end)
       task.wait(MOBILE_MODE and 0.35 or 0.1)
     else
@@ -3357,13 +3421,13 @@ task.spawn(function()
     for _, v340 in ipairs(p75:GetChildren()) do
       if v340:IsA("GuiObject") and v340.Name:find("-") then
         local petHolder = v340:FindFirstChild("PetHolder") or v340
-        if petHolder and not v340:GetAttribute("CrownHooked") then
-          v340:SetAttribute("CrownHooked", true)
+        if petHolder and not v340:GetAttribute("VeloxHooked") then
+          v340:SetAttribute("VeloxHooked", true)
           petHolder.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1
               or input.UserInputType == Enum.UserInputType.Touch then
-              ozionhubState.SelectedPetKey = v340.Name
-              ozionhubState.FeedTargetMode = "Selected Pet Only"
+              veloxHubState.SelectedPetKey = v340.Name
+              veloxHubState.FeedTargetMode = "Selected Pet Only"
               local text2 = petHolder:FindFirstChild("PetName", true)
                   and petHolder:FindFirstChild("PetName", true).Text
                 or "Pet"
@@ -3385,7 +3449,7 @@ task.spawn(function()
     end
   end
 
-  while not (_G.OzionhubInstanceId ~= ozionhubInstanceId) do
+  while not (_G.VeloxHubInstanceId ~= veloxHubInstanceId) do
     pcall(function()
       local main2 = localPlayer2:FindFirstChild("PlayerGui")
         and localPlayer2.PlayerGui:FindFirstChild("Main")
@@ -3411,7 +3475,7 @@ local Window = WindUI:CreateWindow({
   AutoScale = true,
 })
 
-_G.OzionhubInstance = Window
+_G.VeloxHubInstance = Window
 local v347 = Window
 
 if not v347.Notify then
@@ -3440,9 +3504,9 @@ MainTab:Section({ Title = "Auto Steal Eggs" })
 MainTab:Toggle({
   Title = "Auto Steal Eggs",
   Desc = "Automatically collect eggs and deliver them to your plot",
-  Value = ozionhubState.AutoFarm,
+  Value = veloxHubState.AutoFarm,
   Flag = "AutoFarm",
-  Callback = function(v) ozionhubState.AutoFarm = v end,
+  Callback = function(v) veloxHubState.AutoFarm = v end,
 })
 
 MainTab:Section({ Title = "Target Filter" })
@@ -3450,7 +3514,7 @@ MainTab:Dropdown({
   Title = "Minimum Rarity",
   Desc = "Only steal eggs of this rarity or higher",
   Values = { "All Eggs", "Rare & Above", "Epic & Above", "Legendary & Above", "Mythic & Above", "Divine & Above", "Ethereal Only" },
-  Value = ozionhubState.MinFarmRarity,
+  Value = veloxHubState.MinFarmRarity,
   Flag = "MinFarmRarity",
   Callback = function(v) f10(v) end,
 })
@@ -3459,69 +3523,69 @@ MainTab:Dropdown({
   Title = "Target Specific Egg",
   Desc = "Override the rarity filter and only target one specific egg",
   Values = values,
-  Value = ozionhubState.TargetSpecificEgg,
+  Value = veloxHubState.TargetSpecificEgg,
   Flag = "TargetSpecificEgg",
-  Callback = function(v) ozionhubState.TargetSpecificEgg = v end,
+  Callback = function(v) veloxHubState.TargetSpecificEgg = v end,
 })
 
 MainTab:Dropdown({
   Title = "Farm Priority",
   Desc = "How to choose the next egg to grab",
   Values = { "Highest Rarity First", "Closest Distance First", "Heaviest Weight First", "Highest Luck First" },
-  Value = ozionhubState.FarmPriority,
+  Value = veloxHubState.FarmPriority,
   Flag = "FarmPriority",
-  Callback = function(v) ozionhubState.FarmPriority = v end,
+  Callback = function(v) veloxHubState.FarmPriority = v end,
 })
 
 MainTab:Toggle({
   Title = "Prioritize Heaviest",
   Desc = "When two targets tie, prefer the heavier egg",
-  Value = ozionhubState.PrioritizeHeaviest,
+  Value = veloxHubState.PrioritizeHeaviest,
   Flag = "PrioritizeHeaviest",
-  Callback = function(v) ozionhubState.PrioritizeHeaviest = v end,
+  Callback = function(v) veloxHubState.PrioritizeHeaviest = v end,
 })
 
 MainTab:Slider({
   Title = "Minimum Egg Weight",
   Desc = "Skip eggs lighter than this (0 = no minimum)",
   Step = 1,
-  Value = { Min = 0, Max = 500, Default = ozionhubState.MinEggWeight or 0 },
+  Value = { Min = 0, Max = 500, Default = veloxHubState.MinEggWeight or 0 },
   Flag = "MinEggWeight",
-  Callback = function(v) ozionhubState.MinEggWeight = v end,
+  Callback = function(v) veloxHubState.MinEggWeight = v end,
 })
 
 MainTab:Section({ Title = "Mutations" })
 MainTab:Toggle({
   Title = "Prioritize Mutated Eggs",
   Desc = "Prefer eggs with active mutations over normal eggs",
-  Value = ozionhubState.PrioritizeMutations,
+  Value = veloxHubState.PrioritizeMutations,
   Flag = "PrioritizeMutations",
-  Callback = function(v) ozionhubState.PrioritizeMutations = v end,
+  Callback = function(v) veloxHubState.PrioritizeMutations = v end,
 })
 
 MainTab:Dropdown({
   Title = "Minimum Mutation Tier",
   Desc = "Ignore mutations below this tier",
   Values = { "All Mutations (Shocked+)", "Volted & Above (3x+)", "Rage & Above (4x+)", "Magma & Above (10x+)", "Eternal Only (100x)" },
-  Value = ozionhubState.MinMutationTier,
+  Value = veloxHubState.MinMutationTier,
   Flag = "MinMutationTier",
-  Callback = function(v) ozionhubState.MinMutationTier = v end,
+  Callback = function(v) veloxHubState.MinMutationTier = v end,
 })
 
 MainTab:Toggle({
   Title = "Wait For Weather Eggs",
   Desc = "Pause the farm loop when a storm mutation is about to appear",
-  Value = ozionhubState.WeatherEggWait,
+  Value = veloxHubState.WeatherEggWait,
   Flag = "WeatherEggWait",
-  Callback = function(v) ozionhubState.WeatherEggWait = v end,
+  Callback = function(v) veloxHubState.WeatherEggWait = v end,
 })
 
 MainTab:Toggle({
   Title = "Weather Notifications",
   Desc = "Notify when a storm mutation is detected",
-  Value = ozionhubState.WeatherNotify,
+  Value = veloxHubState.WeatherNotify,
   Flag = "WeatherNotify",
-  Callback = function(v) ozionhubState.WeatherNotify = v end,
+  Callback = function(v) veloxHubState.WeatherNotify = v end,
 })
 
 MainTab:Section({ Title = "Travel" })
@@ -3529,93 +3593,93 @@ MainTab:Dropdown({
   Title = "Steal Approach",
   Desc = "Route used when flying to the target egg",
   Values = { "Over Map", "Under Map", "Straight" },
-  Value = ozionhubState.StealApproach,
+  Value = veloxHubState.StealApproach,
   Flag = "StealApproach",
-  Callback = function(v) ozionhubState.StealApproach = v end,
+  Callback = function(v) veloxHubState.StealApproach = v end,
 })
 
 MainTab:Slider({
   Title = "Tween Speed",
-  Desc = "Flight speed used for stealing and returning to plot",
-  Step = 25,
-  Value = { Min = 20, Max = 10000, Default = ozionhubState.TweenSpeed },
+  Desc = "Smooth flight speed in studs/sec (higher = faster but easier to detect)",
+  Step = 5,
+  Value = { Min = 20, Max = 500, Default = 50 },
   Flag = "TweenSpeed",
-  Callback = function(v) ozionhubState.TweenSpeed = v end,
+  Callback = function(v) veloxHubState.TweenSpeed = v end,
 })
 
 MainTab:Slider({
   Title = "Sync Delay",
   Desc = "Delay after landing before triggering pickup",
   Step = 0.05,
-  Value = { Min = 0.25, Max = 0.6, Default = ozionhubState.SyncDelay },
+  Value = { Min = 0.25, Max = 0.6, Default = veloxHubState.SyncDelay },
   Flag = "SyncDelay",
-  Callback = function(v) ozionhubState.SyncDelay = v end,
+  Callback = function(v) veloxHubState.SyncDelay = v end,
 })
 
 MainTab:Slider({
   Title = "Post-Pickup Delay",
   Desc = "Extra wait after pickup before moving on",
   Step = 0.05,
-  Value = { Min = 0.15, Max = 0.6, Default = ozionhubState.PostPickupDelay },
+  Value = { Min = 0.15, Max = 0.6, Default = veloxHubState.PostPickupDelay },
   Flag = "PostPickupDelay",
-  Callback = function(v) ozionhubState.PostPickupDelay = v end,
+  Callback = function(v) veloxHubState.PostPickupDelay = v end,
 })
 
 MainTab:Toggle({
   Title = "Auto Return To Plot",
   Desc = "Fly back to your plot when no target is available",
-  Value = ozionhubState.AutoReturnPlot,
+  Value = veloxHubState.AutoReturnPlot,
   Flag = "AutoReturnPlot",
-  Callback = function(v) ozionhubState.AutoReturnPlot = v end,
+  Callback = function(v) veloxHubState.AutoReturnPlot = v end,
 })
 
 MainTab:Section({ Title = "Rebirth" })
 MainTab:Toggle({
   Title = "Auto Rebirth",
   Desc = "Automatically rebirths once requirements are met",
-  Value = ozionhubState.AutoRebirth,
+  Value = veloxHubState.AutoRebirth,
   Flag = "AutoRebirth",
-  Callback = function(v) ozionhubState.AutoRebirth = v end,
+  Callback = function(v) veloxHubState.AutoRebirth = v end,
 })
 
 MainTab:Toggle({
   Title = "Auto Rebirth When Ready",
   Desc = "Fires the rebirth as soon as it becomes possible",
-  Value = ozionhubState.AutoRebirthWhenReady,
+  Value = veloxHubState.AutoRebirthWhenReady,
   Flag = "AutoRebirthWhenReady",
-  Callback = function(v) ozionhubState.AutoRebirthWhenReady = v end,
+  Callback = function(v) veloxHubState.AutoRebirthWhenReady = v end,
 })
 
 MainTab:Toggle({
   Title = "Prioritize Rebirth Pet",
   Desc = "Steal the specific egg needed for the next rebirth",
-  Value = ozionhubState.PrioritizeRebirthPet,
+  Value = veloxHubState.PrioritizeRebirthPet,
   Flag = "PrioritizeRebirthPet",
-  Callback = function(v) ozionhubState.PrioritizeRebirthPet = v end,
+  Callback = function(v) veloxHubState.PrioritizeRebirthPet = v end,
 })
 
 MainTab:Toggle({
   Title = "Auto Magma Dip",
   Desc = "Dips eggs in the volcano for a chance at Magma mutation",
-  Value = ozionhubState.AutoMagmaDip,
+  Value = veloxHubState.AutoMagmaDip,
   Flag = "AutoMagmaDip",
-  Callback = function(v) ozionhubState.AutoMagmaDip = v end,
+  Callback = function(v) veloxHubState.AutoMagmaDip = v end,
 })
 
 VisualTab:Section({ Title = "Egg ESP" })
 VisualTab:Toggle({
   Title = "Enable ESP",
   Desc = "Draw overlays over eggs in the world",
-  Value = ozionhubState.ESP_Enabled,
+  Value = veloxHubState.ESP_Enabled,
   Flag = "ESP_Enabled",
-  Callback = function(v) ozionhubState.ESP_Enabled = v end,
+  Callback = function(v) veloxHubState.ESP_Enabled = v end,
 })
 
 VisualTab:Dropdown({
   Title = "Visual Preset",
   Desc = "Which ESP layers to draw",
   Values = { "Highlights + Floating Text", "All Visuals (Highlight + Text + Tracer)", "Floating Text Only (Clean)", "Highlights Only (Minimal)", "Tracers Only" },
-  Value = ozionhubState.ESP_VisualPreset,
+  Value = veloxHubState.ESP_VisualPreset,
   Flag = "ESP_VisualPreset",
   Callback = function(v) f11(v) end,
 })
@@ -3624,162 +3688,162 @@ VisualTab:Dropdown({
   Title = "Minimum Rarity",
   Desc = "Only show eggs of this rarity or higher",
   Values = { "All Eggs", "Rare & Above", "Epic & Above", "Legendary & Above", "Mythic & Above", "Divine & Above", "Ethereal Only" },
-  Value = ozionhubState.ESP_MinRarity,
+  Value = veloxHubState.ESP_MinRarity,
   Flag = "ESP_MinRarity",
-  Callback = function(v) ozionhubState.ESP_MinRarity = v end,
+  Callback = function(v) veloxHubState.ESP_MinRarity = v end,
 })
 
 VisualTab:Slider({
   Title = "Max Distance",
   Desc = "Eggs farther than this are not drawn",
   Step = 100,
-  Value = { Min = 500, Max = 10000, Default = ozionhubState.ESP_MaxDistance },
+  Value = { Min = 500, Max = 10000, Default = veloxHubState.ESP_MaxDistance },
   Flag = "ESP_MaxDistance",
-  Callback = function(v) ozionhubState.ESP_MaxDistance = v end,
+  Callback = function(v) veloxHubState.ESP_MaxDistance = v end,
 })
 
 VisualTab:Toggle({
   Title = "Highlights",
   Desc = "Pulsing colored fill on tracked eggs",
-  Value = ozionhubState.ESP_Highlights,
+  Value = veloxHubState.ESP_Highlights,
   Flag = "ESP_Highlights",
-  Callback = function(v) ozionhubState.ESP_Highlights = v end,
+  Callback = function(v) veloxHubState.ESP_Highlights = v end,
 })
 
 VisualTab:Toggle({
   Title = "Floating Text",
   Desc = "Pill label showing name, rarity, weight, mutation, distance",
-  Value = ozionhubState.ESP_Billboards,
+  Value = veloxHubState.ESP_Billboards,
   Flag = "ESP_Billboards",
-  Callback = function(v) ozionhubState.ESP_Billboards = v end,
+  Callback = function(v) veloxHubState.ESP_Billboards = v end,
 })
 
 VisualTab:Toggle({
   Title = "Tracers",
   Desc = "Line from screen bottom to each egg (requires Drawing API)",
-  Value = ozionhubState.ESP_Tracers,
+  Value = veloxHubState.ESP_Tracers,
   Flag = "ESP_Tracers",
-  Callback = function(v) ozionhubState.ESP_Tracers = v end,
+  Callback = function(v) veloxHubState.ESP_Tracers = v end,
 })
 
 VisualTab:Section({ Title = "Player" })
 VisualTab:Toggle({
   Title = "No Clip",
   Desc = "Walk through walls and objects",
-  Value = ozionhubState.NoClip,
+  Value = veloxHubState.NoClip,
   Flag = "NoClip",
-  Callback = function(v) ozionhubState.NoClip = v end,
+  Callback = function(v) veloxHubState.NoClip = v end,
 })
 
 VisualTab:Toggle({
   Title = "Speed Modifier",
   Desc = "Multiply base walk speed",
-  Value = ozionhubState.SpeedModEnabled,
+  Value = veloxHubState.SpeedModEnabled,
   Flag = "SpeedModEnabled",
-  Callback = function(v) ozionhubState.SpeedModEnabled = v end,
+  Callback = function(v) veloxHubState.SpeedModEnabled = v end,
 })
 
 VisualTab:Slider({
   Title = "Speed Multiplier",
   Desc = "Multiplier applied to WalkSpeed",
   Step = 1,
-  Value = { Min = 1, Max = 10, Default = ozionhubState.SpeedMultiplier },
+  Value = { Min = 1, Max = 10, Default = veloxHubState.SpeedMultiplier },
   Flag = "SpeedMultiplier",
-  Callback = function(v) ozionhubState.SpeedMultiplier = v end,
+  Callback = function(v) veloxHubState.SpeedMultiplier = v end,
 })
 
 VisualTab:Toggle({
   Title = "Infinite Jump",
   Desc = "Jump as many times as you want, even mid-air",
-  Value = ozionhubState.InfiniteJump,
+  Value = veloxHubState.InfiniteJump,
   Flag = "InfiniteJump",
-  Callback = function(v) ozionhubState.InfiniteJump = v end,
+  Callback = function(v) veloxHubState.InfiniteJump = v end,
 })
 
 FeaturesTab:Section({ Title = "Best Pets" })
 FeaturesTab:Toggle({
   Title = "Auto Place Best Pets",
   Desc = "Keeps your highest income pets placed on the plot",
-  Value = ozionhubState.AutoPlaceBestPets,
+  Value = veloxHubState.AutoPlaceBestPets,
   Flag = "AutoPlaceBestPets",
-  Callback = function(v) ozionhubState.AutoPlaceBestPets = v end,
+  Callback = function(v) veloxHubState.AutoPlaceBestPets = v end,
 })
 
 FeaturesTab:Dropdown({
   Title = "Best Pets Strategy",
   Desc = "How pets are ranked when choosing which to place",
   Values = { "Smart Potential", "Current Cash/s" },
-  Value = ozionhubState.BestPetsStrategy,
+  Value = veloxHubState.BestPetsStrategy,
   Flag = "BestPetsStrategy",
-  Callback = function(v) ozionhubState.BestPetsStrategy = v end,
+  Callback = function(v) veloxHubState.BestPetsStrategy = v end,
 })
 
 FeaturesTab:Section({ Title = "Auto Feed Pets" })
 FeaturesTab:Toggle({
   Title = "Auto Feed Pets",
   Desc = "Automatically feeds placed pets to level them up",
-  Value = ozionhubState.AutoFeedPets,
+  Value = veloxHubState.AutoFeedPets,
   Flag = "AutoFeedPets",
-  Callback = function(v) ozionhubState.AutoFeedPets = v end,
+  Callback = function(v) veloxHubState.AutoFeedPets = v end,
 })
 
 UIControls.FeedTargetMode = FeaturesTab:Dropdown({
   Title = "Feed Target",
   Desc = "Which pets to feed",
   Values = { "Smart Priority", "Selected Pet Only" },
-  Value = ozionhubState.FeedTargetMode,
+  Value = veloxHubState.FeedTargetMode,
   Flag = "FeedTargetMode",
-  Callback = function(v) ozionhubState.FeedTargetMode = v end,
+  Callback = function(v) veloxHubState.FeedTargetMode = v end,
 })
 
 FeaturesTab:Dropdown({
   Title = "Feed Priority",
   Desc = "How to rank pets when deciding the next feed",
   Values = { "Smart Potential", "Highest Max Income", "Lowest Level First" },
-  Value = ozionhubState.FeedPriorityMode,
+  Value = veloxHubState.FeedPriorityMode,
   Flag = "FeedPriorityMode",
-  Callback = function(v) ozionhubState.FeedPriorityMode = v end,
+  Callback = function(v) veloxHubState.FeedPriorityMode = v end,
 })
 
 FeaturesTab:Toggle({
   Title = "Skip Max-Age Pets",
   Desc = "Ignore pets that have already reached max level",
-  Value = ozionhubState.FeedSkipMaxAge,
+  Value = veloxHubState.FeedSkipMaxAge,
   Flag = "FeedSkipMaxAge",
-  Callback = function(v) ozionhubState.FeedSkipMaxAge = v end,
+  Callback = function(v) veloxHubState.FeedSkipMaxAge = v end,
 })
 
 FeaturesTab:Toggle({
   Title = "Allow Premium Food",
   Desc = "Include Dragonfruit and Magic Apple when feeding",
-  Value = ozionhubState.FeedAllowPremiumFood,
+  Value = veloxHubState.FeedAllowPremiumFood,
   Flag = "FeedAllowPremiumFood",
-  Callback = function(v) ozionhubState.FeedAllowPremiumFood = v end,
+  Callback = function(v) veloxHubState.FeedAllowPremiumFood = v end,
 })
 
 FeaturesTab:Section({ Title = "Auto Fuse" })
 FeaturesTab:Toggle({
   Title = "Auto Fuse",
   Desc = "Automatically runs pet fusion on eligible pets",
-  Value = ozionhubState.AutoFuse,
+  Value = veloxHubState.AutoFuse,
   Flag = "AutoFuse",
-  Callback = function(v) ozionhubState.AutoFuse = v end,
+  Callback = function(v) veloxHubState.AutoFuse = v end,
 })
 
 FeaturesTab:Toggle({
   Title = "Protect Favorited",
   Desc = "Never fuse pets you've favorited",
-  Value = ozionhubState.FuseProtectFavorited,
+  Value = veloxHubState.FuseProtectFavorited,
   Flag = "FuseProtectFavorited",
-  Callback = function(v) ozionhubState.FuseProtectFavorited = v end,
+  Callback = function(v) veloxHubState.FuseProtectFavorited = v end,
 })
 
 FeaturesTab:Toggle({
   Title = "Auto Favorite Fused Pets",
   Desc = "Favorites the resulting pet after a fusion",
-  Value = ozionhubState.AutoFavoriteFuse,
+  Value = veloxHubState.AutoFavoriteFuse,
   Flag = "AutoFavoriteFuse",
-  Callback = function(v) ozionhubState.AutoFavoriteFuse = v end,
+  Callback = function(v) veloxHubState.AutoFavoriteFuse = v end,
 })
 
 FeaturesTab:Dropdown({
@@ -3788,7 +3852,7 @@ FeaturesTab:Dropdown({
   Values = { "Legendary", "Mythic", "Divine", "Ethereal" },
   Value = (function()
     local out = {}
-    for k, v in pairs(ozionhubState.FuseRarities or {}) do
+    for k, v in pairs(veloxHubState.FuseRarities or {}) do
       if v then table.insert(out, k) end
     end
     return out
@@ -3798,7 +3862,7 @@ FeaturesTab:Dropdown({
   Callback = function(sel)
     local t = { Legendary = false, Mythic = false, Divine = false, Ethereal = false }
     for _, k in ipairs(sel) do t[k] = true end
-    ozionhubState.FuseRarities = t
+    veloxHubState.FuseRarities = t
   end,
 })
 
@@ -3806,41 +3870,41 @@ FeaturesTab:Section({ Title = "Nests" })
 FeaturesTab:Toggle({
   Title = "Auto Place Nest",
   Desc = "Places eggs into open nests automatically",
-  Value = ozionhubState.AutoPlaceNest,
+  Value = veloxHubState.AutoPlaceNest,
   Flag = "AutoPlaceNest",
-  Callback = function(v) ozionhubState.AutoPlaceNest = v end,
+  Callback = function(v) veloxHubState.AutoPlaceNest = v end,
 })
 
 FeaturesTab:Toggle({
   Title = "Reveal Nests",
   Desc = "Make nests visible through walls",
-  Value = ozionhubState.SpawnNest,
+  Value = veloxHubState.SpawnNest,
   Flag = "SpawnNest",
-  Callback = function(v) ozionhubState.SpawnNest = v end,
+  Callback = function(v) veloxHubState.SpawnNest = v end,
 })
 
 FeaturesTab:Toggle({
   Title = "Auto Unlock Nests",
   Desc = "Tries to unlock every locked nest on your plot",
-  Value = ozionhubState.AutoUnlockNests,
+  Value = veloxHubState.AutoUnlockNests,
   Flag = "AutoUnlockNests",
-  Callback = function(v) ozionhubState.AutoUnlockNests = v end,
+  Callback = function(v) veloxHubState.AutoUnlockNests = v end,
 })
 
 FeaturesTab:Toggle({
   Title = "Auto Hatch Plot Eggs",
   Desc = "Hatches eggs on your plot as soon as they're ready",
-  Value = ozionhubState.AutoHatchPlot,
+  Value = veloxHubState.AutoHatchPlot,
   Flag = "AutoHatchPlot",
-  Callback = function(v) ozionhubState.AutoHatchPlot = v end,
+  Callback = function(v) veloxHubState.AutoHatchPlot = v end,
 })
 
 FeaturesTab:Toggle({
   Title = "Auto Upgrade Luck",
   Desc = "Buys all hatch luck upgrades automatically",
-  Value = ozionhubState.AutoUpgradeLuck,
+  Value = veloxHubState.AutoUpgradeLuck,
   Flag = "AutoUpgradeLuck",
-  Callback = function(v) ozionhubState.AutoUpgradeLuck = v end,
+  Callback = function(v) veloxHubState.AutoUpgradeLuck = v end,
 })
 
 local halloweenCfg = {
