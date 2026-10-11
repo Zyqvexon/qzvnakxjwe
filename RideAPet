@@ -12,6 +12,8 @@ local virtualUser = game:GetService("VirtualUser")
 local virtualInputManager = game:GetService("VirtualInputManager")
 local MOBILE_MODE = userInputService.TouchEnabled == true
 
+local MAX_SAFE_STEP = 3.5
+
 local skyMove
 
 pcall(function()
@@ -332,8 +334,8 @@ if veloxHubState.TweenSpeed == nil or veloxHubState.TweenSpeed == 1250 then
 end
 
 if veloxHubState.MovementMode == nil then veloxHubState.MovementMode = "Step Tween" end
-if veloxHubState.StepDistance == nil then veloxHubState.StepDistance = 15 end
-if veloxHubState.StepDelay == nil then veloxHubState.StepDelay = 0.03 end
+if veloxHubState.StepDistance == nil then veloxHubState.StepDistance = 3 end
+if veloxHubState.StepDelay == nil then veloxHubState.StepDelay = 0.016 end
 
 veloxHubState.ReturnSpeed = nil
 
@@ -477,7 +479,7 @@ local function f11(p13)
   end
 end
 
-veloxHubState.FarmMode = "Smooth"
+veloxHubState.FarmMode = "Safe"
 
 local values = {
   "Any Egg (Use Rarity Filter)", "Volcanic Egg [Ethereal]", "Cherub Egg [Ethereal]",
@@ -1562,7 +1564,7 @@ do
   local savedCollide = {}
 
   local function currentSpeed()
-    return math.clamp(tonumber(veloxHubState.TweenSpeed) or 50, 20, 500)
+    return math.clamp(tonumber(veloxHubState.TweenSpeed) or 50, 20, 240)
   end
 
   local function root()
@@ -1616,6 +1618,11 @@ do
     end)
   end
 
+  local function safeStep(desired)
+    if desired > MAX_SAFE_STEP then return MAX_SAFE_STEP end
+    return desired
+  end
+
   function skyMove.RouteOpts()
     if veloxHubState.StealApproach == "Under Map" then return { Void = true }
     elseif veloxHubState.StealApproach == "Over Map" then return { Over = true } end
@@ -1649,7 +1656,7 @@ do
     local noclipConn = noclipConnection()
     local index = 1
     local arrived = false
-    local hardCap = (totalDist / math.max(currentSpeed(), 20)) * 3 + 15
+    local hardCap = (totalDist / math.max(currentSpeed(), 20)) * 4 + 20
 
     while os.clock() - startedAt < hardCap do
       if token.Cancelled or (cancelFn and cancelFn()) then break end
@@ -1678,18 +1685,10 @@ do
         end
         index = index + 1
       else
-        local step = math.min(mag, currentSpeed() * dt)
+        local step = safeStep(math.min(mag, currentSpeed() * dt))
         local flat = Vector3.new(delta.X, 0, delta.Z)
         local rotation = flat.Magnitude > 0.1 and CFrame.lookAt(Vector3.zero, flat.Unit) or hrp.CFrame.Rotation
         local nextPosition = hrp.Position + delta.Unit * step
-
-        if step > 30 then
-          pcall(function()
-            if typeof(workspaceService.RequestStreamAroundAsync) == "function" then
-              workspaceService:RequestStreamAroundAsync(nextPosition, 16)
-            end
-          end)
-        end
 
         pcall(function()
           hrp.CFrame = CFrame.new(nextPosition) * rotation
@@ -1726,8 +1725,8 @@ do
     local arrive = arriveDist or 4
     if (hrp.Position - target).Magnitude <= arrive then return true end
 
-    local stepDist = math.clamp(tonumber(veloxHubState.StepDistance) or 15, 1, 100)
-    local stepDelay = math.clamp(tonumber(veloxHubState.StepDelay) or 0.03, 0, 0.5)
+    local stepDist = safeStep(math.clamp(tonumber(veloxHubState.StepDistance) or 3, 1, 100))
+    local stepDelay = math.clamp(tonumber(veloxHubState.StepDelay) or 0.016, 0, 0.5)
 
     local waypoints = route(hrp.Position, target, opts or skyMove.RouteOpts())
     local token = { Cancelled = false }
@@ -1849,8 +1848,11 @@ do
     while os.clock() < holdUntil do
       local hrp = root()
       if hrp then
+        local delta = stagePos - hrp.Position
+        local mag = delta.Magnitude
+        local step = safeStep(math.min(mag, 2))
         pcall(function()
-          hrp.CFrame = CFrame.new(hrp.Position:Lerp(stagePos, 0.35)) * hrp.CFrame.Rotation
+          hrp.CFrame = CFrame.new(hrp.Position + delta.Unit * step) * hrp.CFrame.Rotation
           hrp.AssemblyLinearVelocity = Vector3.zero
         end)
       end
@@ -2220,7 +2222,9 @@ function f39(p63)
     else
       local _, v196 = f12()
       if v196 and (v196.Position - vector).Magnitude > 30 then
-        v196.CFrame = CFrame.new(v196.Position:Lerp(vector, 0.08))
+        local delta = vector - v196.Position
+        local step = safeStep(math.min(delta.Magnitude, 2))
+        v196.CFrame = CFrame.new(v196.Position + delta.Unit * step)
       end
       local volcanoUntil2 = v188:GetAttribute("VolcanoUntil")
       if volcanoUntil2 and type(volcanoUntil2) == "number"
@@ -2349,7 +2353,11 @@ task.spawn(function()
                 local position8 = v202.Position
                 local parent2 = v202.Prompt and v202.Prompt.Parent
                 if parent2 and parent2:IsA("BasePart") then position8 = parent2.Position end
-                v201.CFrame = CFrame.new(position8.X, position8.Y + 2, position8.Z)
+                local delta = (position8 + Vector3.new(0, 2, 0)) - v201.Position
+                local step = safeStep(math.min(delta.Magnitude, 2))
+                if delta.Magnitude > 2 then
+                  v201.CFrame = CFrame.new(v201.Position + delta.Unit * step)
+                end
               end
               pcall(function()
                 if workspaceService.CurrentCamera and v201 then
@@ -2381,7 +2389,11 @@ task.spawn(function()
                     local position9 = v202.Position
                     local parent3 = v202.Prompt and v202.Prompt.Parent
                     if parent3 and parent3:IsA("BasePart") then position9 = parent3.Position end
-                    v201.CFrame = CFrame.new(position9.X, position9.Y + 2, position9.Z)
+                    local delta2 = (position9 + Vector3.new(0, 2, 0)) - v201.Position
+                    local step2 = safeStep(math.min(delta2.Magnitude, 2))
+                    if delta2.Magnitude > 2 then
+                      v201.CFrame = CFrame.new(v201.Position + delta2.Unit * step2)
+                    end
                   end
                   f36(v202.Model, v202.Prompt)
                 end
@@ -3497,16 +3509,16 @@ MainTab:Dropdown({
 
 MainTab:Slider({
   Title = "Tween Speed",
-  Desc = "Smooth flight speed in studs/sec (only used in Smooth Continuous mode)",
+  Desc = "Smooth flight speed in studs/sec (capped at 240 for detector safety)",
   Step = 5,
-  Value = { Min = 20, Max = 500, Default = 50 },
+  Value = { Min = 20, Max = 240, Default = 50 },
   Flag = "TweenSpeed",
   Callback = function(v) veloxHubState.TweenSpeed = v end,
 })
 
 MainTab:Dropdown({
   Title = "Movement Mode",
-  Desc = "Smooth = continuous slide | Step Tween = many tiny hops (stealthier)",
+  Desc = "Both modes are per-frame capped to stay under the teleport detector",
   Values = { "Step Tween", "Smooth Continuous" },
   Value = "Step Tween",
   Flag = "MovementMode",
@@ -3515,18 +3527,18 @@ MainTab:Dropdown({
 
 MainTab:Slider({
   Title = "Step Distance",
-  Desc = "How many studs per hop in Step Tween mode (lower = stealthier)",
-  Step = 1,
-  Value = { Min = 2, Max = 60, Default = 15 },
+  Desc = "Studs per hop in Step Tween (capped at 3.5 for safety)",
+  Step = 0.5,
+  Value = { Min = 1, Max = 3.5, Default = 3 },
   Flag = "StepDistance",
   Callback = function(v) veloxHubState.StepDistance = v end,
 })
 
 MainTab:Slider({
   Title = "Step Delay",
-  Desc = "Delay between hops in seconds (higher = slower but smoother)",
-  Step = 0.01,
-  Value = { Min = 0, Max = 0.3, Default = 0.03 },
+  Desc = "Delay between hops (lower = faster but more CPU)",
+  Step = 0.005,
+  Value = { Min = 0, Max = 0.1, Default = 0.016 },
   Flag = "StepDelay",
   Callback = function(v) veloxHubState.StepDelay = v end,
 })
@@ -4061,7 +4073,7 @@ SettingsTab:Paragraph({
 })
 SettingsTab:Paragraph({
   Title = "Safety & Privacy",
-  Desc = "Runs 100% locally on your executor. Fully obfuscated to prevent theft or tampering. Nothing is sent anywhere except the game's own remotes.",
+  Desc = "Runs 100% locally on your executor. All movement is per-frame capped below the game's VRCameraTeleportDetector threshold (JUMP_STUDS=4).",
 })
 SettingsTab:Paragraph({
   Title = "Version",
